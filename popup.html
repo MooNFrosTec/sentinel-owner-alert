@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      min-width: 430px;
+      max-width: 480px;
+      font-family: Arial, sans-serif;
+      padding: 14px;
+      background: #111;
+      color: #eee;
+    }
+    h1 { font-size: 16px; margin: 0 0 10px; }
+    h2 { font-size: 13px; margin: 16px 0 8px; color: #ddd; border-top: 1px solid #333; padding-top: 12px; }
+    label { display: block; margin-top: 10px; font-size: 13px; }
+    input[type="range"], input[type="text"], input[type="number"], input[type="time"] { width: 100%; box-sizing: border-box; }
+    input[type="text"], input[type="number"], input[type="time"] {
+      padding: 6px;
+      background: #222;
+      color: #eee;
+      border: 1px solid #444;
+      border-radius: 4px;
+    }
+    input[type="file"] { width: 100%; margin-top: 6px; }
+    button {
+      margin-top: 10px;
+      width: 100%;
+      padding: 8px;
+      border: 0;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .primary { background: #1976d2; color: white; }
+    .secondary { background: #333; color: white; }
+    .danger { background: #5b1f1f; color: white; }
+    .row { display: flex; gap: 8px; align-items: center; }
+    .row > * { flex: 1; }
+    .row button { flex: 1; }
+    .inline { display: inline-flex; align-items: center; gap: 6px; margin: 4px 10px 4px 0; font-size: 13px; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: end; }
+    .status { margin-top: 12px; padding: 10px; background: #1d1d1d; border: 1px solid #333; border-radius: 6px; font-size: 12px; line-height: 1.45; }
+    .small { color: #aaa; font-size: 12px; line-height: 1.35; }
+    .muted { color: #aaa; }
+    .pill { display: inline-block; background: #222; border: 1px solid #333; border-radius: 999px; padding: 2px 8px; margin: 2px 3px 2px 0; font-size: 12px; }
+    .scanBox { margin-top: 12px; padding: 10px; background: #1d1d1d; border: 1px solid #333; border-radius: 6px; }
+    .scanTop { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+    .scanState { display: flex; align-items: center; gap: 8px; font-weight: bold; }
+    .dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; background: #777; }
+    .dot.ok { background: #2e7d32; box-shadow: 0 0 8px #2e7d32; }
+    .dot.warn { background: #f9a825; box-shadow: 0 0 8px #f9a825; }
+    .dot.bad { background: #c62828; box-shadow: 0 0 8px #c62828; }
+    .counterGrid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 8px; }
+    .counter { background: #171717; border: 1px solid #2c2c2c; border-radius: 5px; padding: 6px; text-align: center; }
+    .counter b { display: block; font-size: 16px; }
+    .incidentList { max-height: 260px; overflow: auto; border: 1px solid #333; border-radius: 6px; background: #151515; }
+    .incidentItem { padding: 8px; border-bottom: 1px solid #282828; }
+    .incidentItem:last-child { border-bottom: 0; }
+    .incidentTitle { font-weight: bold; font-size: 12px; margin-bottom: 4px; }
+    .incidentMeta { font-size: 11px; color: #bbb; line-height: 1.35; }
+    .tag { display: inline-block; border-radius: 999px; padding: 1px 7px; margin-right: 4px; font-size: 11px; border: 1px solid #444; background: #222; }
+    .tag.ok { border-color: #2e7d32; }
+    .tag.wait { border-color: #f9a825; }
+    .tag.block { border-color: #7b1f1f; }
+    .empty { padding: 10px; color: #888; font-size: 12px; }
+    .autoRefreshRow { margin-top: 9px; padding: 8px; border-radius: 6px; background: #171717; border: 1px solid #333; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .refPill { display: inline-block; min-width: 44px; text-align: center; border-radius: 999px; padding: 3px 8px; font-weight: bold; border: 1px solid #555; background: #222; }
+    .refPill.on { color: #c8f7c5; border-color: #2e7d32; }
+    .refPill.off { color: #ffd2d2; border-color: #c62828; background: #3a1616; }
+    .refPill.unknown { color: #ffe8a3; border-color: #f9a825; }
+
+  </style>
+</head>
+<body>
+  <h1>Sentinel Owner Alert v3.2</h1>
+  <div class="small">Monitoring Microsoft Sentinel incident owneru v Azure Portal.</div>
+
+  <div class="scanBox">
+    <div class="scanTop">
+      <div class="scanState"><span id="scanDot" class="dot"></span><span id="scanStateText">Scanner unknown</span></div>
+      <div class="small" id="scanAge">-</div>
+    </div>
+    <div class="small" id="scanReason">Cekam na prvni scan...</div>
+    <div class="counterGrid">
+      <div class="counter"><b id="cntVisible">0</b><span class="small">visible</span></div>
+      <div class="counter"><b id="cntTarget">0</b><span class="small">target</span></div>
+      <div class="counter"><b id="cntEligible">0</b><span class="small">eligible</span></div>
+    </div>
+    <div class="autoRefreshRow">
+      <div>
+        <b>Auto-refresh incidents</b><br>
+        <span class="small" id="autoRefreshText">Cekam na scan...</span>
+      </div>
+      <span id="autoRefreshPill" class="refPill unknown">?</span>
+    </div>
+    <div class="small" style="margin-top:8px;">Visible = radky, ktere rozsireni aktualne vidi v tabulce. Target = owner odpovida nastaveni. Eligible = target + severity + schedule.</div>
+  </div>
+
+  <h2>Monitoring</h2>
+  <label><input id="enabled" type="checkbox"> Monitoring zapnuty</label>
+  <label><input id="desktopNotifications" type="checkbox"> Desktop notifikace</label>
+  <label><input id="notifyOnExisting" type="checkbox"> Pipnout i pri existujicim radku s target ownerem</label>
+  <label><input id="repeatWhilePresent" type="checkbox"> Pipat opakovane, dokud je alert v seznamu</label>
+
+  <h2>Auto-refresh kontrola</h2>
+  <label><input id="autoRefreshBannerEnabled" type="checkbox"> Zobrazit varovani primo na strance, kdyz je auto-refresh vypnuty</label>
+  <label><input id="autoRefreshSoundEnabled" type="checkbox"> Pipnout, kdyz auto-refresh neni zapnuty</label>
+  <label>Opakovat auto-refresh varovani kazdych: <span id="autoRefreshSoundLabel"></span> s</label>
+  <input id="autoRefreshSoundSeconds" type="range" min="10" max="300" step="5">
+  <label><input id="autoRefreshAutoEnable" type="checkbox"> Automaticky zapnout auto-refresh, pokud je vypnuty</label>
+  <button id="enableAutoRefreshNow" class="danger">Zapnout auto-refresh ted</button>
+  <div class="small">Rozsireni hleda tlacitko <code>Auto-refresh incidents</code> a cte jeho <code>aria-pressed</code>. Automaticke zapnuti pouze klikne na stejny toggle jako uzivatel.</div>
+
+  <label>Target Owner</label>
+  <input id="targetOwner" type="text" placeholder="SOC_Tier_1">
+
+  <label>Interval kontroly: <span id="intervalLabel"></span> s</label>
+  <input id="intervalSeconds" type="range" min="1" max="30" step="1">
+
+  <label>Opakovat pipnuti kazdych: <span id="repeatLabel"></span> s</label>
+  <input id="repeatSoundSeconds" type="range" min="2" max="120" step="1">
+
+  <h2>Severity filter</h2>
+  <label><input id="severityFilterEnabled" type="checkbox"> Filtrovat podle severity</label>
+  <div id="severityOptions">
+    <label class="inline"><input id="sevCritical" type="checkbox"> Critical</label>
+    <label class="inline"><input id="sevHigh" type="checkbox"> High</label>
+    <label class="inline"><input id="sevMedium" type="checkbox"> Medium</label>
+    <label class="inline"><input id="sevLow" type="checkbox"> Low</label>
+    <label class="inline"><input id="sevInformational" type="checkbox"> Informational</label>
+    <label class="inline"><input id="includeUnknownSeverity" type="checkbox"> Unknown</label>
+  </div>
+  <div class="small">Kdyz je filter vypnuty, severity se ignoruje. Unknown pomaha, kdyz Azure Portal severity v radku neda spolehlive precist.</div>
+
+  <h2>Working hours</h2>
+  <label><input id="scheduleEnabled" type="checkbox"> Pouzivat casovy rozvrh</label>
+  <div class="grid2">
+    <label>Od
+      <input id="scheduleStart" type="time">
+    </label>
+    <label>Do
+      <input id="scheduleEnd" type="time">
+    </label>
+  </div>
+  <div id="scheduleDays">
+    <label class="inline"><input id="day1" type="checkbox"> Po</label>
+    <label class="inline"><input id="day2" type="checkbox"> Ut</label>
+    <label class="inline"><input id="day3" type="checkbox"> St</label>
+    <label class="inline"><input id="day4" type="checkbox"> Ct</label>
+    <label class="inline"><input id="day5" type="checkbox"> Pa</label>
+    <label class="inline"><input id="day6" type="checkbox"> So</label>
+    <label class="inline"><input id="day0" type="checkbox"> Ne</label>
+  </div>
+  <div class="small">Mimo nastavene dny/cas rozsireni stale scanuje stav, ale neprehrava zvuk a neposila notifikace.</div>
+
+  <h2>Sound</h2>
+  <label>Hlasitost: <span id="volumeLabel"></span>%</label>
+  <input id="volume" type="range" min="0" max="100" step="5">
+
+  <label>Vlastni zvuk MP3/WAV/OGG</label>
+  <input id="customSound" type="file" accept="audio/*">
+  <button id="clearSound" class="secondary">Pouzit vychozi zvuk</button>
+  <div class="small" id="soundStatus"></div>
+
+  <div class="row">
+    <button id="testSound" class="primary">Test zvuku</button>
+    <button id="forceScan" class="secondary">Force scan</button>
+  </div>
+  <button id="testDesktop" class="secondary">Test desktop notifikace</button>
+
+  <h2>Aktualne viditelne incidenty</h2>
+  <div class="incidentList" id="visibleRows"><div class="empty">Zatim zadne radky.</div></div>
+  <div class="small">Tady uvidis i incidenty, ktere nejsou na target ownerovi. Pokud je tabulka ve Sentinelu filtrovana, rozsireni vidi jen to, co je aktualne nactene v DOM.</div>
+
+  <h2>Zapamatovane / uz neviditelne</h2>
+  <div class="incidentList" id="rememberedRows"><div class="empty">Zatim nic.</div></div>
+  <div class="small">Tahle cast ukazuje nedavno videne incidenty, ktere uz nejsou v aktualne nactenem seznamu.</div>
+
+  <h2>Status</h2>
+  <div class="status" id="status">Nacitani...</div>
+  <div class="small">Vlastni zvuk je ulozen v chrome.storage.local. Zustane zachovan po restartu Brave/PC, dokud nesmazes data rozsireni nebo nenainstalujes novou kopii jako jine rozsireni.</div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
