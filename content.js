@@ -554,7 +554,7 @@
     if (Number(volume) <= 0) return;
     const vol = Math.max(0, Math.min(1, Number(volume) || DEFAULTS.volume));
     try {
-      const src = customSoundDataUrl || chrome.runtime.getURL('alert.wav');
+      const src = customSoundDataUrl || chrome.runtime.getURL('alert.mp3');
       const audio = new Audio(src);
       audio.volume = vol;
       await audio.play();
@@ -961,5 +961,5 @@
 
   start();
   setStatus({ loaded: true, lastCheck: new Date().toLocaleString(), lastCheckTs: Date.now(), lastError: '' });
-  console.log(LOG_PREFIX, 'loaded v3.2.1');
+  console.log(LOG_PREFIX, 'loaded v3.2.2');
 })();

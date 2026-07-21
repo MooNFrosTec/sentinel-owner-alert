@@ -1,4 +1,4 @@
-Sentinel Owner Alert v3.2.1
+Sentinel Owner Alert v3.2.2
 
 Update/install:
 1. Unzip this package.
@@ -10,7 +10,10 @@ Update/install:
    This creates a new extension instance, so settings and custom sound start from defaults.
 6. Refresh the Microsoft Sentinel Incidents page after reloading the extension.
 
-New in v3.2.1:
+New in v3.2.2:
+- Uses the triple-bell MP3 as the bundled default alert sound.
+
+Existing v3.2.1 improvements:
 - More reliable Auto-refresh ON/OFF detection.
 - Serialized scans prevent overlapping checks and duplicate alerts.
 - Repeat alerts are tracked independently for each incident.

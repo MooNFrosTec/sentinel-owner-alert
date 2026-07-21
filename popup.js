@@ -370,7 +370,7 @@ async function load() {
 async function playTestSound() {
   const cfg = mergeConfig(await chrome.storage.local.get(DEFAULTS));
   if (Number(cfg.volume) <= 0) return;
-  const src = cfg.customSoundDataUrl || chrome.runtime.getURL('alert.wav');
+  const src = cfg.customSoundDataUrl || chrome.runtime.getURL('alert.mp3');
   const audio = new Audio(src);
   audio.volume = Math.max(0, Math.min(1, Number(cfg.volume) || 0.8));
   try {
