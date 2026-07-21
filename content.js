@@ -342,8 +342,13 @@
     return cells.find((cell) => isLikelyTitleCandidate(cell, targetOwner)) || normalize(rowText).slice(0, 120);
   }
 
-  function extractLink(row) {
-    const link = row.querySelector('a[href]');
+  function extractLink(row, headerMap) {
+    const cells = [...row.querySelectorAll('[role="gridcell"], [role="cell"], td, th')]
+      .filter((cell) => normalize(cell.innerText || cell.textContent || ''));
+    const titleCell = Number.isInteger(headerMap.title) ? cells[headerMap.title] : null;
+    const incidentLink = titleCell && titleCell.querySelector('a[href]');
+    const link = incidentLink || [...row.querySelectorAll('a[href]')]
+      .find((candidate) => /incident/i.test(candidate.getAttribute('href') || ''));
     if (!link) return '';
     return link.href || link.getAttribute('href') || '';
   }
@@ -387,6 +392,12 @@
     return map;
   }
 
+  function isIncidentHeaderMap(headerMap) {
+    return Number.isInteger(headerMap.severity) &&
+      Number.isInteger(headerMap.title) &&
+      Number.isInteger(headerMap.owner);
+  }
+
   function looksLikeOwner(value, targetOwner) {
     const text = normalize(value);
     const lower = text.toLowerCase();
@@ -423,18 +434,20 @@
   }
 
   function extractRows(cfg) {
-    const candidates = [...document.querySelectorAll('[role="row"], tr')];
     const rows = [];
     const seen = new Set();
-    const headerMaps = new Map();
+    const rowHeaderMaps = new Map();
+    const containers = [...document.querySelectorAll('[role="grid"], [role="treegrid"], table')];
 
-    function headerMapForRow(row) {
-      const container = row.closest('[role="grid"], [role="treegrid"], table') || document;
-      if (!headerMaps.has(container)) headerMaps.set(container, getHeaderMap(container));
-      return headerMaps.get(container);
+    for (const container of containers) {
+      const headerMap = getHeaderMap(container);
+      if (!isIncidentHeaderMap(headerMap)) continue;
+      for (const row of container.querySelectorAll('[role="row"], tr')) {
+        if (!rowHeaderMaps.has(row)) rowHeaderMaps.set(row, headerMap);
+      }
     }
 
-    for (const row of candidates) {
+    for (const [row, headerMap] of rowHeaderMaps.entries()) {
       const text = normalize(row.innerText || row.textContent || '');
       if (!text || text.length < 5) continue;
       if (/Severity\s+Title\s+Owner/i.test(text)) continue;
@@ -442,7 +455,6 @@
 
       const cells = getCellTexts(row);
       if (cells.length >= 2 && cells.some((cell) => /^severity$/i.test(cell)) && cells.some((cell) => /^owner$/i.test(cell))) continue;
-      const headerMap = headerMapForRow(row);
 
       let owner = '';
       let ownerIndex = -1;
@@ -450,7 +462,7 @@
       let title = '';
       let status = '';
       let created = '';
-      const href = extractLink(row);
+      const href = extractLink(row, headerMap);
 
       if (cells.length >= 2) {
         const ownerResult = findOwner(cells, cfg, headerMap);
@@ -961,5 +973,5 @@
 
   start();
   setStatus({ loaded: true, lastCheck: new Date().toLocaleString(), lastCheckTs: Date.now(), lastError: '' });
-  console.log(LOG_PREFIX, 'loaded v3.2.2');
+  console.log(LOG_PREFIX, 'loaded v3.2.3');
 })();

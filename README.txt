@@ -1,4 +1,4 @@
-Sentinel Owner Alert v3.2.2
+Sentinel Owner Alert v3.2.3
 
 Update/install:
 1. Unzip this package.
@@ -10,7 +10,11 @@ Update/install:
    This creates a new extension instance, so settings and custom sound start from defaults.
 6. Refresh the Microsoft Sentinel Incidents page after reloading the extension.
 
-New in v3.2.2:
+New in v3.2.3:
+- Scans only grids with Severity, Title and Owner columns, preventing detail-panel rows such as Logic app from appearing as incidents.
+- Prefers the incident title link instead of unrelated links from another cell.
+
+Existing v3.2.2 features:
 - Uses the triple-bell MP3 as the bundled default alert sound.
 
 Existing v3.2.1 improvements:
