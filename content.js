@@ -14,6 +14,8 @@
   let autoRefreshBannerSignature = '';
   let activeScanPromise = null;
   let pendingScanReason = '';
+  let observer = null;
+  let contextInvalidated = false;
 
   const DEFAULTS = {
     enabled: true,
@@ -251,6 +253,26 @@
       includeUnknownSeverity: true
     });
     return mergeConfig(raw);
+  }
+
+  function isContextInvalidatedError(error) {
+    return /extension context invalidated/i.test(String(error && error.message ? error.message : error));
+  }
+
+  function stopInvalidatedMonitor() {
+    contextInvalidated = true;
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+      debounceTimer = null;
+    }
+    if (observer) {
+      observer.disconnect();
+      observer = null;
+    }
   }
 
   async function setStatus(patch) {
@@ -891,6 +913,7 @@
   }
 
   function scan(reason = 'auto') {
+    if (contextInvalidated) return Promise.resolve();
     if (activeScanPromise) {
       pendingScanReason = queueScanReason(pendingScanReason, reason);
       return activeScanPromise;
@@ -903,7 +926,13 @@
         await performScan(nextReason);
         nextReason = pendingScanReason;
       }
-    })().finally(() => {
+    })().catch((error) => {
+      if (isContextInvalidatedError(error)) {
+        stopInvalidatedMonitor();
+        return;
+      }
+      console.warn(LOG_PREFIX, 'scan error:', error);
+    }).finally(() => {
       activeScanPromise = null;
     });
 
@@ -966,12 +995,12 @@
     }
   });
 
-  const observer = new MutationObserver(scheduleMutationScan);
+  observer = new MutationObserver(scheduleMutationScan);
   observer.observe(document.documentElement, { childList: true, subtree: true, characterData: true, attributes: true });
   window.addEventListener('focus', () => scan('focus'));
   document.addEventListener('visibilitychange', () => scan('visibility'));
 
   start();
   setStatus({ loaded: true, lastCheck: new Date().toLocaleString(), lastCheckTs: Date.now(), lastError: '' });
-  console.log(LOG_PREFIX, 'loaded v3.2.3');
+  console.log(LOG_PREFIX, 'loaded v3.2.4');
 })();
