@@ -1,4 +1,4 @@
-Sentinel Owner Alert v3.2
+Sentinel Owner Alert v3.2.1
 
 Update/install:
 1. Unzip this package.
@@ -10,7 +10,14 @@ Update/install:
    This creates a new extension instance, so settings and custom sound start from defaults.
 6. Refresh the Microsoft Sentinel Incidents page after reloading the extension.
 
-New in v3.2:
+New in v3.2.1:
+- More reliable Auto-refresh ON/OFF detection.
+- Serialized scans prevent overlapping checks and duplicate alerts.
+- Repeat alerts are tracked independently for each incident.
+- More stable incident identification and table header detection.
+- Notification clicks survive service worker suspension and can open the incident.
+
+Existing v3.2 features:
 - Detects the Microsoft Sentinel Auto-refresh incidents toggle.
 - Popup indicator shows Auto-refresh ON / OFF / not found.
 - Browser action badge shows REF when Auto-refresh incidents is OFF.
