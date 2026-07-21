@@ -10,9 +10,10 @@
   let debounceTimer = null;
   let checks = 0;
   let lastSignature = '';
-  let lastRepeatAlertAt = 0;
   let lastAutoRefreshAlertAt = 0;
   let autoRefreshBannerSignature = '';
+  let activeScanPromise = null;
+  let pendingScanReason = '';
 
   const DEFAULTS = {
     enabled: true,
@@ -122,10 +123,10 @@
     if (ariaPressed.toLowerCase() === 'false') enabled = false;
 
     const classText = normalize(`${toggle.className || ''} ${toggle.querySelector('*') ? toggle.querySelector('*').className || '' : ''}`);
-    const activeChild = Boolean(toggle.querySelector('.fxs-toggle-button-active, .fxs-toggle-circle-active, .fxc-toggle-btn-content.fxs-toggle-button-active'));
     const inactiveChild = Boolean(toggle.querySelector('.fxs-toggle-button-inactive, .fxs-toggle-circle-inactive'));
-    if (enabled === null && (activeChild || /active/i.test(classText))) enabled = true;
+    const activeChild = Boolean(toggle.querySelector('.fxs-toggle-button-active, .fxs-toggle-circle-active, .fxc-toggle-btn-content.fxs-toggle-button-active'));
     if (enabled === null && inactiveChild) enabled = false;
+    if (enabled === null && (activeChild || /(?:^|[\s_-])active(?:$|[\s_-])/i.test(classText))) enabled = true;
 
     return {
       found: true,
@@ -353,9 +354,10 @@
       .filter(Boolean);
   }
 
-  function getHeaderMap() {
+  function getHeaderMap(root) {
     const map = {};
-    const headerRows = [...document.querySelectorAll('[role="row"], tr')];
+    const scope = root || document;
+    const headerRows = [...scope.querySelectorAll('[role="row"], tr')];
 
     function applyHeaders(cells) {
       cells.forEach((cell, index) => {
@@ -370,7 +372,7 @@
       });
     }
 
-    const directHeaders = [...document.querySelectorAll('[role="columnheader"], th')]
+    const directHeaders = [...scope.querySelectorAll('[role="columnheader"], th')]
       .map((cell) => normalize(cell.innerText || cell.textContent || ''))
       .filter(Boolean);
     if (directHeaders.length) applyHeaders(directHeaders);
@@ -421,10 +423,16 @@
   }
 
   function extractRows(cfg) {
-    const headerMap = getHeaderMap();
     const candidates = [...document.querySelectorAll('[role="row"], tr')];
     const rows = [];
     const seen = new Set();
+    const headerMaps = new Map();
+
+    function headerMapForRow(row) {
+      const container = row.closest('[role="grid"], [role="treegrid"], table') || document;
+      if (!headerMaps.has(container)) headerMaps.set(container, getHeaderMap(container));
+      return headerMaps.get(container);
+    }
 
     for (const row of candidates) {
       const text = normalize(row.innerText || row.textContent || '');
@@ -434,6 +442,7 @@
 
       const cells = getCellTexts(row);
       if (cells.length >= 2 && cells.some((cell) => /^severity$/i.test(cell)) && cells.some((cell) => /^owner$/i.test(cell))) continue;
+      const headerMap = headerMapForRow(row);
 
       let owner = '';
       let ownerIndex = -1;
@@ -477,9 +486,14 @@
       }
 
       const ariaIndex = row.getAttribute('aria-rowindex') || '';
+      const rowKey = row.getAttribute('data-row-key') ||
+        row.getAttribute('data-item-key') ||
+        row.getAttribute('data-selection-key') ||
+        row.getAttribute('data-automation-key') || '';
       const id = href ||
-        makeStableId([title, created, severity]) ||
-        makeStableId([title, status, ariaIndex]) ||
+        rowKey ||
+        makeStableId([title, created]) ||
+        makeStableId([title, ariaIndex]) ||
         text.slice(0, 300);
 
       if (!id || seen.has(id)) continue;
@@ -691,7 +705,7 @@
     }).catch(() => {});
   }
 
-  async function scan(reason = 'auto') {
+  async function performScan(reason = 'auto') {
     const cfg = await getConfig();
     const schedule = scheduleState(cfg);
     const now = Date.now();
@@ -771,7 +785,8 @@
         const existingAllowed = previous === undefined && cfg.notifyOnExisting === true && reason !== 'initial';
         const becameAllowedBySeverity = previous !== undefined && previous.targetMatched === true && previous.severityAllowed === false;
         const repeatSeconds = Math.max(1, Number(cfg.repeatSoundSeconds || DEFAULTS.repeatSoundSeconds));
-        const repeatDue = Date.now() - lastRepeatAlertAt >= repeatSeconds * 1000;
+        const repeatDue = now - Number((previous && previous.lastAlertAt) || 0) >= repeatSeconds * 1000;
+        let lastAlertAt = Number((previous && previous.lastAlertAt) || 0);
 
         let alertReason = '';
         if (changedFromUnassigned) alertReason = 'owner changed from Unassigned';
@@ -782,10 +797,10 @@
 
         if (alertReason) {
           await alertFor(row, cfg, previous, alertReason);
-          if (repeatWhilePresent) {
-            lastRepeatAlertAt = Date.now();
-          }
+          lastAlertAt = Date.now();
         }
+
+        row.lastAlertAt = lastAlertAt;
       }
 
       knownRows.set(row.id, {
@@ -803,7 +818,8 @@
         lastSeen: now,
         lastSeenText: new Date(now).toLocaleTimeString(),
         visible: true,
-        previousOwner: previous && previous.owner ? previous.owner : ''
+        previousOwner: previous && previous.owner ? previous.owner : '',
+        lastAlertAt: Number(row.lastAlertAt || (previous && previous.lastAlertAt) || 0)
       });
     }
 
@@ -847,6 +863,39 @@
         debug: `reason=${reason}; rows=${rows.length}; target=${targetRows}; eligible=${eligibleRows}; visible=${statusRows.visible.length}; remembered=${statusRows.remembered.length}`
       });
     }
+  }
+
+  function queueScanReason(currentReason, nextReason) {
+    const priority = {
+      auto: 1,
+      mutation: 2,
+      visibility: 3,
+      focus: 3,
+      initial: 4,
+      'enable-auto-refresh': 5,
+      force: 6
+    };
+    return (priority[nextReason] || 1) >= (priority[currentReason] || 0) ? nextReason : currentReason;
+  }
+
+  function scan(reason = 'auto') {
+    if (activeScanPromise) {
+      pendingScanReason = queueScanReason(pendingScanReason, reason);
+      return activeScanPromise;
+    }
+
+    activeScanPromise = (async () => {
+      let nextReason = reason;
+      while (nextReason) {
+        pendingScanReason = '';
+        await performScan(nextReason);
+        nextReason = pendingScanReason;
+      }
+    })().finally(() => {
+      activeScanPromise = null;
+    });
+
+    return activeScanPromise;
   }
 
   function scheduleMutationScan() {

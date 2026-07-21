@@ -101,6 +101,42 @@ chrome.runtime.onStartup.addListener(() => {
 
 const notificationTargets = new Map();
 
+function notificationTargetKey(notificationId) {
+  return `notificationTarget:${notificationId}`;
+}
+
+function safePortalUrl(value) {
+  try {
+    const url = new URL(value || '');
+    return url.origin === 'https://portal.azure.com' ? url.href : '';
+  } catch (error) {
+    return '';
+  }
+}
+
+async function rememberNotificationTarget(notificationId, target) {
+  notificationTargets.set(notificationId, target);
+  if (chrome.storage.session) {
+    await chrome.storage.session.set({ [notificationTargetKey(notificationId)]: target });
+  }
+}
+
+async function getNotificationTarget(notificationId) {
+  const remembered = notificationTargets.get(notificationId);
+  if (remembered) return remembered;
+  if (!chrome.storage.session) return null;
+  const key = notificationTargetKey(notificationId);
+  const stored = await chrome.storage.session.get(key);
+  return stored[key] || null;
+}
+
+async function forgetNotificationTarget(notificationId) {
+  notificationTargets.delete(notificationId);
+  if (chrome.storage.session) {
+    await chrome.storage.session.remove(notificationTargetKey(notificationId));
+  }
+}
+
 function buildNotificationMessage(message) {
   const lines = [];
   if (message.severity) lines.push(`Severity: ${message.severity}`);
@@ -139,12 +175,12 @@ async function updateBadge(sender, message) {
   });
 }
 
-function createNotification(message, sender) {
+async function createNotification(message, sender) {
   const tabId = sender && sender.tab ? sender.tab.id : null;
   const windowId = sender && sender.tab ? sender.tab.windowId : null;
   const notificationId = `sentinel-owner-alert-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
-  chrome.notifications.create(notificationId, {
+  await chrome.notifications.create(notificationId, {
     type: 'basic',
     iconUrl: 'icon128.png',
     title: message.title ? `Sentinel: ${message.title}` : 'Sentinel incident assigned',
@@ -152,10 +188,10 @@ function createNotification(message, sender) {
     priority: message.severity === 'High' || message.severity === 'Critical' ? 2 : 1
   });
 
-  notificationTargets.set(notificationId, {
+  await rememberNotificationTarget(notificationId, {
     tabId,
     windowId,
-    url: sender && sender.tab ? sender.tab.url : ''
+    url: safePortalUrl(message.href) || safePortalUrl(sender && sender.tab ? sender.tab.url : '')
   });
 }
 
@@ -166,7 +202,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message && message.type === 'SENTINEL_OWNER_ALERT') {
       const cfg = await chrome.storage.local.get({ desktopNotifications: true });
       if (cfg.desktopNotifications !== false) {
-        createNotification(message, sender);
+        await createNotification(message, sender);
       }
     }
 
@@ -175,7 +211,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message && message.type === 'TEST_DESKTOP_NOTIFICATION') {
-      createNotification({
+      await createNotification({
         title: 'Test notification',
         severity: 'Test',
         owner: 'SOC_Tier_1',
@@ -192,16 +228,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 chrome.notifications.onClicked.addListener((notificationId) => {
-  const target = notificationTargets.get(notificationId);
-  chrome.notifications.clear(notificationId);
-  if (!target || !target.tabId) return;
+  (async () => {
+    const target = await getNotificationTarget(notificationId);
+    await chrome.notifications.clear(notificationId);
+    await forgetNotificationTarget(notificationId);
+    if (!target || !target.tabId) return;
 
-  chrome.tabs.update(target.tabId, { active: true }).catch(() => {});
-  if (target.windowId) {
-    chrome.windows.update(target.windowId, { focused: true }).catch(() => {});
-  }
+    const update = { active: true };
+    if (target.url) update.url = target.url;
+    await chrome.tabs.update(target.tabId, update).catch(() => {});
+    if (target.windowId) {
+      await chrome.windows.update(target.windowId, { focused: true }).catch(() => {});
+    }
+  })().catch((error) => console.warn('[Sentinel Owner Alert] notification click error:', error));
 });
 
 chrome.notifications.onClosed.addListener((notificationId) => {
-  notificationTargets.delete(notificationId);
+  forgetNotificationTarget(notificationId).catch(() => {});
 });
