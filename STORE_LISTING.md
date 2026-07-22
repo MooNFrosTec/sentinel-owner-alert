@@ -18,7 +18,7 @@ Productivity
 
 **Language**
 
-English
+English (default) and Czech (`cs`). The package contains both Chrome localization catalogs. After uploading the package, add the Czech store-listing localization in the dashboard using the copy below.
 
 **Detailed description**
 
@@ -36,6 +36,33 @@ Main features:
 The extension reads only information already visible in the Microsoft Sentinel interface. It does not call Microsoft Sentinel APIs, send data to external servers, include advertising, or use analytics or tracking.
 
 Because Microsoft Sentinel uses virtualized tables, the extension can monitor only rows currently loaded into the page DOM.
+
+### Czech store-listing localization
+
+**Product name**
+
+Sentinel Owner Alert
+
+**Summary**
+
+Sleduje viditelné incidenty Microsoft Sentinel a upozorní při shodě vlastníka, závažnosti a časového rozvrhu.
+
+**Detailed description**
+
+Sentinel Owner Alert sleduje řádky incidentů právě zobrazené na stránce Incidenty v Microsoft Sentinel. Zvukem a oznámením na ploše upozorní na incidenty, které odpovídají pravidlům nastaveným uživatelem.
+
+Hlavní funkce:
+
+- sledování incidentů přiřazených nastavenému vlastníkovi;
+- filtrování oznámení podle závažnosti a pracovní doby;
+- vestavěný zvuk upozornění nebo vlastní zvuk uložený pouze místně;
+- zobrazení stavu skeneru, počtu viditelných incidentů a nedávno pozorovaných incidentů;
+- rozpoznání vypnutého automatického obnovování Microsoft Sentinel a volitelné varování;
+- otevření příslušné karty Microsoft Sentinel po kliknutí na oznámení.
+
+Rozšíření čte pouze údaje, které jsou už zobrazené v rozhraní Microsoft Sentinel. Nevolá API Microsoft Sentinel, neposílá data na externí servery a neobsahuje reklamy, analytiku ani sledování uživatelů.
+
+Kvůli virtualizovaným tabulkám v Microsoft Sentinel může rozšíření sledovat pouze řádky právě načtené ve stránce.
 
 **Support URL**
 

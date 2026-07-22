@@ -13,11 +13,14 @@ PACKAGE_FILES = (
     'content.js',
     'popup.html',
     'popup.js',
+    'i18n.js',
     'alert.wav',
     'icon16.png',
     'icon32.png',
     'icon48.png',
     'icon128.png',
+    '_locales/en/messages.json',
+    '_locales/cs/messages.json',
 )
 
 

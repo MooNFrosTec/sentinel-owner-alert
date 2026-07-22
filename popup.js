@@ -1,4 +1,12 @@
 const $ = (id) => document.getElementById(id);
+const { t, localizeDocument } = globalThis.SentinelOwnerAlertI18n;
+
+localizeDocument();
+$('extensionTitle').textContent = t(
+  'extensionTitle',
+  [chrome.runtime.getManifest().version],
+  `Sentinel Owner Alert v${chrome.runtime.getManifest().version}`
+);
 
 const DEFAULTS = {
   enabled: true,
@@ -75,6 +83,37 @@ function escapeHtml(value) {
     .replace(/'/g, '&#039;');
 }
 
+function localizeOperationalText(value) {
+  const text = String(value || '');
+  const keys = {
+    auto: 'scanAuto',
+    mutation: 'scanMutation',
+    initial: 'scanInitial',
+    force: 'scanForce',
+    focus: 'scanFocus',
+    visibility: 'scanVisibility',
+    'schedule disabled': 'scheduleDisabled',
+    'no selected days': 'noSelectedDays',
+    'all day schedule': 'allDaySchedule',
+    'outside selected days': 'outsideSelectedDays',
+    'inside working hours': 'insideWorkingHours',
+    'outside working hours': 'outsideWorkingHours',
+    'inside overnight schedule': 'insideOvernightSchedule',
+    'monitoring disabled': 'monitoringDisabledReason',
+    'not a Sentinel page': 'notSentinelPage',
+    'owner is not target': 'ownerNotTarget',
+    'blocked by severity filter': 'blockedBySeverity',
+    'will notify when transition/repeat rule matches': 'willNotify',
+    'unassigned - waiting for target owner': 'unassignedWaiting'
+  };
+  if (keys[text]) return t(keys[text], undefined, text);
+  const schedulePrefix = 'blocked by schedule: ';
+  if (text.startsWith(schedulePrefix)) {
+    return t('blockedBySchedule', [localizeOperationalText(text.slice(schedulePrefix.length))], text);
+  }
+  return text || '-';
+}
+
 async function activeTab() {
   const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
   return tabs[0];
@@ -121,42 +160,42 @@ function renderAutoRefreshStatus(status) {
   pill.className = 'refPill unknown';
   if (s.isSentinel === false) {
     pill.textContent = '-';
-    text.textContent = 'Nejsi na Sentinel Incidents strance.';
+    text.textContent = t('notSentinelPage', undefined, 'This is not a Sentinel Incidents page.');
     return;
   }
 
   if (s.autoRefreshFound !== true) {
     pill.textContent = '?';
-    text.textContent = 'Toggle Auto-refresh incidents nebyl nalezen.';
+    text.textContent = t('autoRefreshNotFound', undefined, 'The Auto-refresh incidents toggle was not found.');
     return;
   }
 
   if (s.autoRefreshEnabled === true) {
     pill.className = 'refPill on';
     pill.textContent = 'ON';
-    text.textContent = 'Auto-refresh je zapnuty.';
+    text.textContent = t('autoRefreshOn', undefined, 'Auto-refresh is enabled.');
     return;
   }
 
   if (s.autoRefreshEnabled === false) {
     pill.className = 'refPill off';
     pill.textContent = 'OFF';
-    text.textContent = 'Auto-refresh je vypnuty - nove incidenty se nemusi nacitat automaticky.';
+    text.textContent = t('autoRefreshOff', undefined, 'Auto-refresh is off; new incidents may not load automatically.');
     return;
   }
 
   pill.textContent = '?';
-  text.textContent = 'Auto-refresh toggle nalezen, ale stav neni jednoznacny.';
+  text.textContent = t('autoRefreshStateUnknown', undefined, 'The auto-refresh toggle was found, but its state is unclear.');
 }
 
 function formatAge(ts) {
   if (!ts) return '-';
   const age = Math.max(0, Date.now() - Number(ts));
-  if (age < 1000) return 'ted';
+  if (age < 1000) return t('now', undefined, 'now');
   const sec = Math.floor(age / 1000);
-  if (sec < 60) return `${sec} s ago`;
+  if (sec < 60) return t('secondsAgo', [String(sec)], `${sec} s ago`);
   const min = Math.floor(sec / 60);
-  return `${min} min ago`;
+  return t('minutesAgo', [String(min)], `${min} min ago`);
 }
 
 function renderScanIndicator(status) {
@@ -173,27 +212,33 @@ function renderScanIndicator(status) {
   dot.className = 'dot';
   if (!s.loaded) {
     dot.classList.add('bad');
-    state.textContent = 'Scanner not loaded';
+    state.textContent = t('scannerNotLoaded', undefined, 'Scanner not loaded');
   } else if (s.enabled === false) {
     dot.classList.add('warn');
-    state.textContent = 'Monitoring off';
+    state.textContent = t('monitoringOff', undefined, 'Monitoring off');
   } else if (s.isSentinel === false) {
     dot.classList.add('warn');
-    state.textContent = 'Not on Sentinel page';
+    state.textContent = t('notOnSentinel', undefined, 'Not on Sentinel page');
   } else if (isStale) {
     dot.classList.add('warn');
-    state.textContent = 'Scanner stale';
+    state.textContent = t('scannerStale', undefined, 'Scanner stale');
   } else if (s.autoRefreshFound === true && s.autoRefreshEnabled === false) {
     dot.classList.add('bad');
-    state.textContent = 'Scanner online, auto-refresh OFF';
+    state.textContent = t('scannerOnlineRefreshOff', undefined, 'Scanner online, auto-refresh OFF');
   } else {
     dot.classList.add('ok');
-    state.textContent = 'Scanner online';
+    state.textContent = t('scannerOnline', undefined, 'Scanner online');
   }
 
-  age.textContent = `Last scan: ${formatAge(lastTs)}`;
-  const autoRefreshState = s.autoRefreshFound === true ? (s.autoRefreshEnabled === true ? 'ON' : (s.autoRefreshEnabled === false ? 'OFF' : 'unknown')) : 'not found';
-  reason.textContent = `Reason: ${s.scanReason || '-'} | Schedule: ${s.scheduleAllowed === false ? 'blocked' : 'allowed'} (${s.scheduleReason || '-'}) | Severity filter: ${s.severityFilterEnabled ? 'on' : 'off'} | Auto-refresh: ${autoRefreshState}`;
+  age.textContent = t('lastScan', [formatAge(lastTs)], `Last scan: ${formatAge(lastTs)}`);
+  const autoRefreshState = s.autoRefreshFound === true ? (s.autoRefreshEnabled === true ? 'ON' : (s.autoRefreshEnabled === false ? 'OFF' : t('unknown'))) : t('notFound');
+  reason.textContent = t('scanDetails', [
+    localizeOperationalText(s.scanReason),
+    s.scheduleAllowed === false ? t('blocked') : t('allowed'),
+    localizeOperationalText(s.scheduleReason),
+    s.severityFilterEnabled ? t('on') : t('off'),
+    autoRefreshState
+  ]);
   renderAutoRefreshStatus(s);
 
   $('cntVisible').textContent = s.rows || 0;
@@ -217,20 +262,20 @@ function renderIncidentList(elementId, rows, emptyText) {
 
   list.innerHTML = data.map((row) => {
     const tagClass = rowStateClass(row);
-    const stateText = row.eligible ? 'eligible' : (row.state || 'waiting');
-    const visibleText = row.visible === false ? 'not visible' : 'visible';
+    const stateText = row.eligible ? t('eligible') : (row.state === 'blocked' ? t('blocked') : t('waiting'));
+    const visibleText = row.visible === false ? t('notVisible') : t('visible');
     return `
       <div class="incidentItem">
-        <div class="incidentTitle">${escapeHtml(row.title || 'Incident')}</div>
+        <div class="incidentTitle">${escapeHtml(row.title || t('incident'))}</div>
         <div class="incidentMeta">
           <span class="tag ${tagClass}">${escapeHtml(stateText)}</span>
           <span class="tag">${escapeHtml(visibleText)}</span>
-          <span class="tag">Owner: ${escapeHtml(row.owner || '-')}</span>
-          <span class="tag">Severity: ${escapeHtml(row.severity || 'Unknown')}</span>
-          ${row.status ? `<span class="tag">Status: ${escapeHtml(row.status)}</span>` : ''}
+          <span class="tag">${escapeHtml(t('ownerLabel', [row.owner || '-']))}</span>
+          <span class="tag">${escapeHtml(t('severityLabel', [row.severity || 'Unknown']))}</span>
+          ${row.status ? `<span class="tag">${escapeHtml(t('statusLabel', [row.status]))}</span>` : ''}
           <br>
-          ${escapeHtml(row.reason || '')}
-          ${row.lastSeen ? `<br>Last seen: ${escapeHtml(row.lastSeen)}` : ''}
+          ${escapeHtml(localizeOperationalText(row.reason || ''))}
+          ${row.lastSeen ? `<br>${escapeHtml(t('lastSeenLabel', [row.lastSeen]))}` : ''}
         </div>
       </div>`;
   }).join('');
@@ -240,32 +285,32 @@ function renderStatus(status) {
   const s = status || {};
   lastStatusCache = s;
   renderScanIndicator(s);
-  renderIncidentList('visibleRows', s.visibleRows || [], 'Zatim zadne viditelne incidenty.');
-  renderIncidentList('rememberedRows', s.rememberedRows || [], 'Zatim zadne zapamatovane incidenty.');
+  renderIncidentList('visibleRows', s.visibleRows || [], t('noVisibleRows'));
+  renderIncidentList('rememberedRows', s.rememberedRows || [], t('noRememberedRows'));
 
   $('status').innerHTML = `
-    <b>Content script:</b> ${s.loaded ? 'nacten' : 'nezjisten'}<br>
-    <b>Monitoring:</b> ${s.enabled === false ? 'vypnuty' : 'zapnuty'}<br>
-    <b>Sentinel page:</b> ${s.isSentinel === false ? 'ne' : 'ano'}<br>
-    <b>Auto-refresh nalezen:</b> ${s.autoRefreshFound === true ? 'ano' : 'ne'}<br>
-    <b>Auto-refresh stav:</b> ${s.autoRefreshFound === true ? (s.autoRefreshEnabled === true ? 'ON' : (s.autoRefreshEnabled === false ? 'OFF' : 'neznamy')) : '-'}<br>
-    <b>Auto-refresh label:</b> ${escapeHtml(s.autoRefreshLabel || '-')}<br>
-    <b>Posledni auto-refresh alert:</b> ${escapeHtml(s.lastAutoRefreshAlert || '-')}<br>
-    <b>Kontroly:</b> ${escapeHtml(s.checks || 0)}<br>
-    <b>Nalezenych radku:</b> ${escapeHtml(s.rows || 0)}<br>
-    <b>Target owner radku:</b> ${escapeHtml(s.targetRows || s.matchingRows || 0)}<br>
-    <b>Non-target radku:</b> ${escapeHtml(s.nonTargetRows || 0)}<br>
-    <b>Eligible radku:</b> ${escapeHtml(s.eligibleRows || 0)}<br>
-    <b>Unassigned radku:</b> ${escapeHtml(s.unassignedRows || 0)}<br>
-    <b>Zapamatovane uz neviditelne:</b> ${escapeHtml(s.notVisibleRememberedRows || 0)}<br>
-    <b>Posledni kontrola:</b> ${escapeHtml(s.lastCheck || '-')}<br>
-    <b>Schedule:</b> ${escapeHtml(s.scheduleReason || '-')}<br>
-    <b>Severity filter:</b> ${escapeHtml(s.severityFilterEnabled ? 'zapnuty' : 'vypnuty')}<br>
-    <b>Posledni owner:</b> ${escapeHtml(s.lastOwner || '-')}<br>
-    <b>Posledni incident:</b> ${escapeHtml(s.lastIncident || '-')}<br>
-    <b>Posledni severity:</b> ${escapeHtml(s.lastSeverity || '-')}<br>
-    <b>Posledni alert:</b> ${escapeHtml(s.lastAlert || '-')}<br>
-    <b>Chyba:</b> ${escapeHtml(s.lastError || '-')}
+    <b>${t('contentScript')}:</b> ${s.loaded ? t('loaded') : t('notDetected')}<br>
+    <b>${t('monitoring')}:</b> ${s.enabled === false ? t('disabled') : t('enabled')}<br>
+    <b>${t('sentinelPage')}:</b> ${s.isSentinel === false ? t('no') : t('yes')}<br>
+    <b>${t('autoRefreshFoundLabel')}:</b> ${s.autoRefreshFound === true ? t('yes') : t('no')}<br>
+    <b>${t('autoRefreshStateLabel')}:</b> ${s.autoRefreshFound === true ? (s.autoRefreshEnabled === true ? 'ON' : (s.autoRefreshEnabled === false ? 'OFF' : t('unknown'))) : '-'}<br>
+    <b>${t('autoRefreshControlLabel')}:</b> ${escapeHtml(s.autoRefreshLabel || '-')}<br>
+    <b>${t('lastAutoRefreshAlert')}:</b> ${escapeHtml(s.lastAutoRefreshAlert || '-')}<br>
+    <b>${t('checks')}:</b> ${escapeHtml(s.checks || 0)}<br>
+    <b>${t('foundRows')}:</b> ${escapeHtml(s.rows || 0)}<br>
+    <b>${t('targetRows')}:</b> ${escapeHtml(s.targetRows || s.matchingRows || 0)}<br>
+    <b>${t('nonTargetRows')}:</b> ${escapeHtml(s.nonTargetRows || 0)}<br>
+    <b>${t('eligibleRows')}:</b> ${escapeHtml(s.eligibleRows || 0)}<br>
+    <b>${t('unassignedRows')}:</b> ${escapeHtml(s.unassignedRows || 0)}<br>
+    <b>${t('rememberedNotVisible')}:</b> ${escapeHtml(s.notVisibleRememberedRows || 0)}<br>
+    <b>${t('lastCheck')}:</b> ${escapeHtml(s.lastCheck || '-')}<br>
+    <b>${t('schedule')}:</b> ${escapeHtml(localizeOperationalText(s.scheduleReason))}<br>
+    <b>${t('severityFilter')}:</b> ${s.severityFilterEnabled ? t('enabled') : t('disabled')}<br>
+    <b>${t('lastOwner')}:</b> ${escapeHtml(s.lastOwner || '-')}<br>
+    <b>${t('lastIncident')}:</b> ${escapeHtml(s.lastIncident || '-')}<br>
+    <b>${t('lastSeverity')}:</b> ${escapeHtml(s.lastSeverity || '-')}<br>
+    <b>${t('lastAlert')}:</b> ${escapeHtml(s.lastAlert || '-')}<br>
+    <b>${t('error')}:</b> ${escapeHtml(s.lastError || '-')}
   `;
 }
 
@@ -352,8 +397,8 @@ async function load() {
   });
 
   $('soundStatus').textContent = cfg.customSoundName
-    ? `Aktivni vlastni zvuk: ${cfg.customSoundName} (ulozeno natrvalo v rozsireni)`
-    : 'Aktivni vychozi zvuk.';
+    ? t('customSoundActive', [cfg.customSoundName])
+    : t('defaultSoundActive');
 
   updateLabels();
   setSeverityOptionsEnabled(cfg.severityFilterEnabled);
@@ -390,16 +435,16 @@ $('customSound').addEventListener('change', async () => {
   if (!file) return;
 
   if (!file.type.startsWith('audio/')) {
-    $('soundStatus').textContent = 'Vyber prosim audio soubor.';
+    $('soundStatus').textContent = t('chooseAudio');
     return;
   }
 
   if (file.size > 5 * 1024 * 1024) {
-    $('soundStatus').textContent = 'Soubor je moc velky. Zkus zvuk do 5 MB.';
+    $('soundStatus').textContent = t('soundTooLarge');
     return;
   }
 
-  $('soundStatus').textContent = 'Ukladam zvuk...';
+  $('soundStatus').textContent = t('savingSound');
   const reader = new FileReader();
   reader.onload = async () => {
     try {
@@ -408,14 +453,14 @@ $('customSound').addEventListener('change', async () => {
         customSoundName: file.name,
         customSoundSavedAt: new Date().toISOString()
       });
-      $('soundStatus').textContent = `Aktivni vlastni zvuk: ${file.name} (ulozeno natrvalo v rozsireni)`;
+      $('soundStatus').textContent = t('customSoundActive', [file.name]);
       await sendToActive({ type: 'RESTART_MONITOR' });
     } catch (e) {
-      $('soundStatus').textContent = 'Zvuk se nepodarilo ulozit. Zkus mensi soubor.';
+      $('soundStatus').textContent = t('saveSoundFailed');
     }
   };
   reader.onerror = () => {
-    $('soundStatus').textContent = 'Zvuk se nepodarilo nacist.';
+    $('soundStatus').textContent = t('readSoundFailed');
   };
   reader.readAsDataURL(file);
 });
@@ -423,7 +468,7 @@ $('customSound').addEventListener('change', async () => {
 $('clearSound').addEventListener('click', async () => {
   await chrome.storage.local.set({ customSoundDataUrl: '', customSoundName: '', customSoundSavedAt: '' });
   $('customSound').value = '';
-  $('soundStatus').textContent = 'Aktivni vychozi zvuk.';
+  $('soundStatus').textContent = t('defaultSoundActive');
   await sendToActive({ type: 'RESTART_MONITOR' });
 });
 
@@ -438,11 +483,11 @@ $('forceScan').addEventListener('click', async () => {
 
 $('enableAutoRefreshNow').addEventListener('click', async () => {
   const btn = $('enableAutoRefreshNow');
-  btn.textContent = 'Zapinam auto-refresh...';
+  btn.textContent = t('enablingAutoRefresh');
   const response = await sendToActive({ type: 'ENABLE_AUTO_REFRESH' });
-  btn.textContent = 'Zapnout auto-refresh ted';
+  btn.textContent = t('enableAutoRefreshNow');
   if (!response || response.ok === false) {
-    $('autoRefreshText').textContent = response && response.error ? response.error : 'Nepodarilo se kontaktovat content script.';
+    $('autoRefreshText').textContent = response && response.error ? response.error : t('contentScriptUnavailable');
   }
   setTimeout(load, 500);
 });
@@ -459,8 +504,8 @@ chrome.storage.onChanged.addListener((changes, area) => {
     chrome.storage.local.get(DEFAULTS).then((stored) => {
       const cfg = mergeConfig(stored);
       $('soundStatus').textContent = cfg.customSoundName
-        ? `Aktivni vlastni zvuk: ${cfg.customSoundName} (ulozeno natrvalo v rozsireni)`
-        : 'Aktivni vychozi zvuk.';
+        ? t('customSoundActive', [cfg.customSoundName])
+        : t('defaultSoundActive');
     });
   }
 });

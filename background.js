@@ -55,6 +55,14 @@ const DEFAULTS = {
   }
 };
 
+function t(key, substitutions, fallback = '') {
+  try {
+    return chrome.i18n.getMessage(key, substitutions) || fallback || key;
+  } catch (error) {
+    return fallback || key;
+  }
+}
+
 async function ensureDefaults() {
   const current = await chrome.storage.local.get({
     ...DEFAULTS,
@@ -139,10 +147,10 @@ async function forgetNotificationTarget(notificationId) {
 
 function buildNotificationMessage(message) {
   const lines = [];
-  if (message.severity) lines.push(`Severity: ${message.severity}`);
-  if (message.owner) lines.push(`Owner: ${message.owner}`);
-  if (message.reason) lines.push(`Reason: ${message.reason}`);
-  return lines.length ? lines.join('\n') : (message.text || 'Owner changed to target owner.');
+  if (message.severity) lines.push(t('severityLabel', [message.severity], `Severity: ${message.severity}`));
+  if (message.owner) lines.push(t('ownerLabel', [message.owner], `Owner: ${message.owner}`));
+  if (message.reason) lines.push(t('reasonLabel', [message.reason], `Reason: ${message.reason}`));
+  return lines.length ? lines.join('\n') : (message.text || t('notificationDefault', undefined, 'Owner changed to target owner.'));
 }
 
 async function updateBadge(sender, message) {
@@ -171,7 +179,12 @@ async function updateBadge(sender, message) {
   await chrome.action.setBadgeBackgroundColor({ tabId: sender.tab.id, color });
   await chrome.action.setTitle({
     tabId: sender.tab.id,
-    title: `Sentinel Owner Alert - rows: ${message.rows || 0}, target: ${message.targetRows || 0}, eligible: ${message.eligibleRows || 0}, auto-refresh: ${message.autoRefreshFound ? (message.autoRefreshEnabled ? 'ON' : 'OFF') : 'unknown'}`
+    title: t('badgeTitle', [
+      String(message.rows || 0),
+      String(message.targetRows || 0),
+      String(message.eligibleRows || 0),
+      message.autoRefreshFound ? (message.autoRefreshEnabled ? 'ON' : 'OFF') : t('unknown')
+    ])
   });
 }
 
@@ -183,7 +196,7 @@ async function createNotification(message, sender) {
   await chrome.notifications.create(notificationId, {
     type: 'basic',
     iconUrl: 'icon128.png',
-    title: message.title ? `Sentinel: ${message.title}` : 'Sentinel incident assigned',
+    title: message.title ? `Sentinel: ${message.title}` : t('notificationAssigned', undefined, 'Sentinel incident assigned'),
     message: buildNotificationMessage(message),
     priority: message.severity === 'High' || message.severity === 'Critical' ? 2 : 1
   });
@@ -212,10 +225,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     if (message && message.type === 'TEST_DESKTOP_NOTIFICATION') {
       await createNotification({
-        title: 'Test notification',
+        title: t('testNotification', undefined, 'Test notification'),
         severity: 'Test',
         owner: 'SOC_Tier_1',
-        reason: 'manual test from extension popup'
+        reason: t('manualTest', undefined, 'manual test from extension popup')
       }, sender);
     }
 

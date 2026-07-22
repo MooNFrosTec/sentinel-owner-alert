@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="cs">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <style>
@@ -72,56 +72,56 @@
   </style>
 </head>
 <body>
-  <h1>Sentinel Owner Alert v3.3.0</h1>
-  <div class="small">Monitoring Microsoft Sentinel incident owneru v Azure Portal.</div>
+  <h1 id="extensionTitle">Sentinel Owner Alert</h1>
+  <div class="small" data-i18n="popupSubtitle">Monitoring Microsoft Sentinel incident owners in Azure Portal.</div>
 
   <div class="scanBox">
     <div class="scanTop">
-      <div class="scanState"><span id="scanDot" class="dot"></span><span id="scanStateText">Scanner unknown</span></div>
+      <div class="scanState"><span id="scanDot" class="dot"></span><span id="scanStateText" data-i18n="scannerUnknown">Scanner unknown</span></div>
       <div class="small" id="scanAge">-</div>
     </div>
-    <div class="small" id="scanReason">Cekam na prvni scan...</div>
+    <div class="small" id="scanReason" data-i18n="waitingForFirstScan">Waiting for the first scan...</div>
     <div class="counterGrid">
-      <div class="counter"><b id="cntVisible">0</b><span class="small">visible</span></div>
-      <div class="counter"><b id="cntTarget">0</b><span class="small">target</span></div>
-      <div class="counter"><b id="cntEligible">0</b><span class="small">eligible</span></div>
+      <div class="counter"><b id="cntVisible">0</b><span class="small" data-i18n="visible">visible</span></div>
+      <div class="counter"><b id="cntTarget">0</b><span class="small" data-i18n="target">target</span></div>
+      <div class="counter"><b id="cntEligible">0</b><span class="small" data-i18n="eligible">eligible</span></div>
     </div>
     <div class="autoRefreshRow">
       <div>
         <b>Auto-refresh incidents</b><br>
-        <span class="small" id="autoRefreshText">Cekam na scan...</span>
+        <span class="small" id="autoRefreshText" data-i18n="waitingForScan">Waiting for scan...</span>
       </div>
       <span id="autoRefreshPill" class="refPill unknown">?</span>
     </div>
-    <div class="small" style="margin-top:8px;">Visible = radky, ktere rozsireni aktualne vidi v tabulce. Target = owner odpovida nastaveni. Eligible = target + severity + schedule.</div>
+    <div class="small" style="margin-top:8px;" data-i18n="counterHelp">Visible = rows currently detected in the table. Target = owner matches the setting. Eligible = target + severity + schedule.</div>
   </div>
 
-  <h2>Monitoring</h2>
-  <label><input id="enabled" type="checkbox"> Monitoring zapnuty</label>
-  <label><input id="desktopNotifications" type="checkbox"> Desktop notifikace</label>
-  <label><input id="notifyOnExisting" type="checkbox"> Pipnout i pri existujicim radku s target ownerem</label>
-  <label><input id="repeatWhilePresent" type="checkbox"> Pipat opakovane, dokud je alert v seznamu</label>
+  <h2 data-i18n="monitoring">Monitoring</h2>
+  <label><input id="enabled" type="checkbox"> <span data-i18n="monitoringEnabled">Monitoring enabled</span></label>
+  <label><input id="desktopNotifications" type="checkbox"> <span data-i18n="desktopNotifications">Desktop notifications</span></label>
+  <label><input id="notifyOnExisting" type="checkbox"> <span data-i18n="notifyExisting">Notify for an existing row with the target owner</span></label>
+  <label><input id="repeatWhilePresent" type="checkbox"> <span data-i18n="repeatWhilePresent">Repeat while the incident remains visible</span></label>
 
-  <h2>Auto-refresh kontrola</h2>
-  <label><input id="autoRefreshBannerEnabled" type="checkbox"> Zobrazit varovani primo na strance, kdyz je auto-refresh vypnuty</label>
-  <label><input id="autoRefreshSoundEnabled" type="checkbox"> Pipnout, kdyz auto-refresh neni zapnuty</label>
-  <label>Opakovat auto-refresh varovani kazdych: <span id="autoRefreshSoundLabel"></span> s</label>
+  <h2 data-i18n="autoRefreshControl">Auto-refresh control</h2>
+  <label><input id="autoRefreshBannerEnabled" type="checkbox"> <span data-i18n="showAutoRefreshWarning">Show a page warning when auto-refresh is off</span></label>
+  <label><input id="autoRefreshSoundEnabled" type="checkbox"> <span data-i18n="soundAutoRefreshWarning">Play a sound when auto-refresh is off</span></label>
+  <label><span data-i18n="repeatAutoRefreshEvery">Repeat auto-refresh warning every</span>: <span id="autoRefreshSoundLabel"></span> s</label>
   <input id="autoRefreshSoundSeconds" type="range" min="10" max="300" step="5">
-  <label><input id="autoRefreshAutoEnable" type="checkbox"> Automaticky zapnout auto-refresh, pokud je vypnuty</label>
-  <button id="enableAutoRefreshNow" class="danger">Zapnout auto-refresh ted</button>
-  <div class="small">Rozsireni hleda tlacitko <code>Auto-refresh incidents</code> a cte jeho <code>aria-pressed</code>. Automaticke zapnuti pouze klikne na stejny toggle jako uzivatel.</div>
+  <label><input id="autoRefreshAutoEnable" type="checkbox"> <span data-i18n="autoEnableAutoRefresh">Automatically enable auto-refresh when it is off</span></label>
+  <button id="enableAutoRefreshNow" class="danger" data-i18n="enableAutoRefreshNow">Enable auto-refresh now</button>
+  <div class="small" data-i18n="autoRefreshHelp">The extension detects the Auto-refresh incidents button and reads its state. Automatic enablement clicks the same toggle as the user.</div>
 
-  <label>Target Owner</label>
+  <label data-i18n="targetOwnerSetting">Target owner</label>
   <input id="targetOwner" type="text" placeholder="SOC_Tier_1">
 
-  <label>Interval kontroly: <span id="intervalLabel"></span> s</label>
+  <label><span data-i18n="scanInterval">Scan interval</span>: <span id="intervalLabel"></span> s</label>
   <input id="intervalSeconds" type="range" min="1" max="30" step="1">
 
-  <label>Opakovat pipnuti kazdych: <span id="repeatLabel"></span> s</label>
+  <label><span data-i18n="repeatAlertEvery">Repeat alert every</span>: <span id="repeatLabel"></span> s</label>
   <input id="repeatSoundSeconds" type="range" min="2" max="120" step="1">
 
-  <h2>Severity filter</h2>
-  <label><input id="severityFilterEnabled" type="checkbox"> Filtrovat podle severity</label>
+  <h2 data-i18n="severityFilter">Severity filter</h2>
+  <label><input id="severityFilterEnabled" type="checkbox"> <span data-i18n="filterBySeverity">Filter by severity</span></label>
   <div id="severityOptions">
     <label class="inline"><input id="sevCritical" type="checkbox"> Critical</label>
     <label class="inline"><input id="sevHigh" type="checkbox"> High</label>
@@ -130,56 +130,57 @@
     <label class="inline"><input id="sevInformational" type="checkbox"> Informational</label>
     <label class="inline"><input id="includeUnknownSeverity" type="checkbox"> Unknown</label>
   </div>
-  <div class="small">Kdyz je filter vypnuty, severity se ignoruje. Unknown pomaha, kdyz Azure Portal severity v radku neda spolehlive precist.</div>
+  <div class="small" data-i18n="severityHelp">When disabled, severity is ignored. Unknown handles rows whose severity cannot be read reliably.</div>
 
-  <h2>Working hours</h2>
-  <label><input id="scheduleEnabled" type="checkbox"> Pouzivat casovy rozvrh</label>
+  <h2 data-i18n="workingHours">Working hours</h2>
+  <label><input id="scheduleEnabled" type="checkbox"> <span data-i18n="useSchedule">Use a schedule</span></label>
   <div class="grid2">
-    <label>Od
+    <label><span data-i18n="from">From</span>
       <input id="scheduleStart" type="time">
     </label>
-    <label>Do
+    <label><span data-i18n="to">To</span>
       <input id="scheduleEnd" type="time">
     </label>
   </div>
   <div id="scheduleDays">
-    <label class="inline"><input id="day1" type="checkbox"> Po</label>
-    <label class="inline"><input id="day2" type="checkbox"> Ut</label>
-    <label class="inline"><input id="day3" type="checkbox"> St</label>
-    <label class="inline"><input id="day4" type="checkbox"> Ct</label>
-    <label class="inline"><input id="day5" type="checkbox"> Pa</label>
-    <label class="inline"><input id="day6" type="checkbox"> So</label>
-    <label class="inline"><input id="day0" type="checkbox"> Ne</label>
+    <label class="inline"><input id="day1" type="checkbox"> <span data-i18n="mondayShort">Mon</span></label>
+    <label class="inline"><input id="day2" type="checkbox"> <span data-i18n="tuesdayShort">Tue</span></label>
+    <label class="inline"><input id="day3" type="checkbox"> <span data-i18n="wednesdayShort">Wed</span></label>
+    <label class="inline"><input id="day4" type="checkbox"> <span data-i18n="thursdayShort">Thu</span></label>
+    <label class="inline"><input id="day5" type="checkbox"> <span data-i18n="fridayShort">Fri</span></label>
+    <label class="inline"><input id="day6" type="checkbox"> <span data-i18n="saturdayShort">Sat</span></label>
+    <label class="inline"><input id="day0" type="checkbox"> <span data-i18n="sundayShort">Sun</span></label>
   </div>
-  <div class="small">Mimo nastavene dny/cas rozsireni stale scanuje stav, ale neprehrava zvuk a neposila notifikace.</div>
+  <div class="small" data-i18n="scheduleHelp">Outside the configured days and hours, the extension still scans but does not play sounds or send notifications.</div>
 
-  <h2>Sound</h2>
-  <label>Hlasitost: <span id="volumeLabel"></span>%</label>
+  <h2 data-i18n="sound">Sound</h2>
+  <label><span data-i18n="volume">Volume</span>: <span id="volumeLabel"></span>%</label>
   <input id="volume" type="range" min="0" max="100" step="5">
 
-  <label>Vlastni zvuk MP3/WAV/OGG</label>
+  <label data-i18n="customSound">Custom sound MP3/WAV/OGG</label>
   <input id="customSound" type="file" accept="audio/*">
-  <button id="clearSound" class="secondary">Pouzit vychozi zvuk</button>
+  <button id="clearSound" class="secondary" data-i18n="useDefaultSound">Use default sound</button>
   <div class="small" id="soundStatus"></div>
 
   <div class="row">
-    <button id="testSound" class="primary">Test zvuku</button>
-    <button id="forceScan" class="secondary">Force scan</button>
+    <button id="testSound" class="primary" data-i18n="testSound">Test sound</button>
+    <button id="forceScan" class="secondary" data-i18n="forceScan">Force scan</button>
   </div>
-  <button id="testDesktop" class="secondary">Test desktop notifikace</button>
+  <button id="testDesktop" class="secondary" data-i18n="testDesktopNotification">Test desktop notification</button>
 
-  <h2>Aktualne viditelne incidenty</h2>
-  <div class="incidentList" id="visibleRows"><div class="empty">Zatim zadne radky.</div></div>
-  <div class="small">Tady uvidis i incidenty, ktere nejsou na target ownerovi. Pokud je tabulka ve Sentinelu filtrovana, rozsireni vidi jen to, co je aktualne nactene v DOM.</div>
+  <h2 data-i18n="currentlyVisibleIncidents">Currently visible incidents</h2>
+  <div class="incidentList" id="visibleRows"><div class="empty" data-i18n="noVisibleRows">No visible rows yet.</div></div>
+  <div class="small" data-i18n="visibleRowsHelp">This includes incidents not assigned to the target owner. The extension sees only rows currently loaded in the Sentinel table.</div>
 
-  <h2>Zapamatovane / uz neviditelne</h2>
-  <div class="incidentList" id="rememberedRows"><div class="empty">Zatim nic.</div></div>
-  <div class="small">Tahle cast ukazuje nedavno videne incidenty, ktere uz nejsou v aktualne nactenem seznamu.</div>
+  <h2 data-i18n="rememberedIncidents">Remembered / no longer visible</h2>
+  <div class="incidentList" id="rememberedRows"><div class="empty" data-i18n="nothingRemembered">Nothing remembered yet.</div></div>
+  <div class="small" data-i18n="rememberedHelp">Recently observed incidents that are no longer present in the currently loaded list.</div>
 
-  <h2>Status</h2>
-  <div class="status" id="status">Nacitani...</div>
-  <div class="small">Vlastni zvuk je ulozen v chrome.storage.local. Zustane zachovan po restartu Brave/PC, dokud nesmazes data rozsireni nebo nenainstalujes novou kopii jako jine rozsireni.</div>
+  <h2 data-i18n="status">Status</h2>
+  <div class="status" id="status" data-i18n="loading">Loading...</div>
+  <div class="small" data-i18n="storageHelp">The custom sound is stored locally and survives browser or computer restarts until extension data is removed.</div>
 
+  <script src="i18n.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

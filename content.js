@@ -1,5 +1,12 @@
 (() => {
   const LOG_PREFIX = '[Sentinel Owner Alert]';
+  const t = (key, substitutions, fallback = '') => {
+    try {
+      return chrome.i18n.getMessage(key, substitutions) || fallback || key;
+    } catch (error) {
+      return fallback || key;
+    }
+  };
   const SEVERITIES = ['Critical', 'High', 'Medium', 'Low', 'Informational'];
   const STATUS_VALUES = ['New', 'Active', 'Closed'];
   const RECENT_LIMIT = 30;
@@ -193,11 +200,11 @@
     autoRefreshBannerSignature = signature;
     banner.setAttribute('data-signature', signature);
     banner.innerHTML = `
-      <div style="font-weight:700;font-size:14px;margin-bottom:4px;">Sentinel Owner Alert: Auto-refresh je vypnuty</div>
-      <div>Bez zapnuteho auto-refresh nemusi Azure Portal nacitat nove incidenty, takze rozsireni nemusi videt zmeny vcas.</div>
+      <div style="font-weight:700;font-size:14px;margin-bottom:4px;">${t('bannerTitle')}</div>
+      <div>${t('bannerBody')}</div>
       <div style="display:flex;gap:8px;margin-top:10px;">
-        <button id="sentinel-owner-alert-enable-auto-refresh" type="button" style="flex:1;padding:7px 10px;border:0;border-radius:5px;background:#fff;color:#7f1d1d;font-weight:700;cursor:pointer;">Zapnout auto-refresh</button>
-        <button id="sentinel-owner-alert-dismiss-auto-refresh" type="button" style="padding:7px 10px;border:1px solid rgba(255,255,255,.5);border-radius:5px;background:transparent;color:#fff;cursor:pointer;">Skrýt</button>
+        <button id="sentinel-owner-alert-enable-auto-refresh" type="button" style="flex:1;padding:7px 10px;border:0;border-radius:5px;background:#fff;color:#7f1d1d;font-weight:700;cursor:pointer;">${t('enableAutoRefresh')}</button>
+        <button id="sentinel-owner-alert-dismiss-auto-refresh" type="button" style="padding:7px 10px;border:1px solid rgba(255,255,255,.5);border-radius:5px;background:transparent;color:#fff;cursor:pointer;">${t('dismiss')}</button>
       </div>`;
 
     const enableButton = document.getElementById('sentinel-owner-alert-enable-auto-refresh');
@@ -233,8 +240,8 @@
         await setStatus({ lastAutoRefreshAlert, lastError: '' });
         chrome.runtime.sendMessage({
           type: 'SENTINEL_OWNER_ALERT',
-          title: 'Auto-refresh incidents is OFF',
-          text: 'Auto-refresh incidents is OFF. New Sentinel incidents may not be loaded automatically.',
+          title: t('autoRefreshNotificationTitle'),
+          text: t('autoRefreshNotificationBody'),
           severity: 'Warning',
           owner: cfg.targetOwner,
           reason: `auto-refresh disabled (${reason})`,

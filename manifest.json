@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Sentinel Owner Alert",
-  "version": "3.3.0",
-  "description": "Monitors visible Microsoft Sentinel incidents and alerts when they match configured owner, severity, and schedule rules.",
+  "name": "__MSG_extensionName__",
+  "version": "3.4.0",
+  "description": "__MSG_extensionDescription__",
+  "default_locale": "en",
   "minimum_chrome_version": "102",
   "homepage_url": "https://github.com/MooNFrosTec/sentinel-owner-alert",
   "icons": {
@@ -22,7 +23,7 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "Sentinel Owner Alert",
+    "default_title": "__MSG_extensionName__",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icon16.png",
@@ -37,6 +38,7 @@
         "https://portal.azure.com/*"
       ],
       "js": [
+        "i18n.js",
         "content.js"
       ],
       "run_at": "document_idle"

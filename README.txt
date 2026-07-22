@@ -1,4 +1,4 @@
-Sentinel Owner Alert v3.3.0
+Sentinel Owner Alert v3.4.0
 
 Update/install:
 1. Unzip this package.
@@ -10,7 +10,12 @@ Update/install:
    This creates a new extension instance, so settings and custom sound start from defaults.
 6. Refresh the Microsoft Sentinel Incidents page after reloading the extension.
 
-New in v3.3.0:
+New in v3.4.0:
+- Added complete English and Czech localization using Chrome's built-in language system.
+- English is the default; Czech is selected automatically when the browser UI uses Czech.
+- Localized the popup, Azure Portal auto-refresh warning, extension metadata and desktop notifications.
+
+Existing v3.3.0 features:
 - Prepared for Chrome Web Store submission with minimum permissions, complete icon metadata and a reproducible release package.
 - Custom sound uploads are limited to 5 MB so the extension stays within the standard local storage quota.
 - Added a privacy policy and Chrome Web Store listing/review guidance.
