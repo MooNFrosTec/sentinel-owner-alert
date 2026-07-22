@@ -1,4 +1,4 @@
-Sentinel Owner Alert v3.2.4
+Sentinel Owner Alert v3.2.5
 
 Update/install:
 1. Unzip this package.
@@ -10,7 +10,11 @@ Update/install:
    This creates a new extension instance, so settings and custom sound start from defaults.
 6. Refresh the Microsoft Sentinel Incidents page after reloading the extension.
 
-New in v3.2.4:
+New in v3.2.5:
+- Replaces the third-party MP3 with an original, reproducibly generated triple-bell WAV sound.
+- The bundled sound can be regenerated with tools/generate_alert.py.
+
+Existing v3.2.4 fix:
 - Stops the old page scanner quietly when an extension reload invalidates its Chrome API context.
 
 Existing v3.2.3 fixes:
