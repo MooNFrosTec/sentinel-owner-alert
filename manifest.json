@@ -1,13 +1,19 @@
 {
   "manifest_version": 3,
   "name": "Sentinel Owner Alert",
-  "version": "3.2.5",
-  "description": "Zvukove a desktop upozorneni pro Microsoft Sentinel incidenty podle ownera, severity, pracovnich hodin a stavu auto-refresh.",
+  "version": "3.3.0",
+  "description": "Monitors visible Microsoft Sentinel incidents and alerts when they match configured owner, severity, and schedule rules.",
+  "minimum_chrome_version": "102",
+  "homepage_url": "https://github.com/MooNFrosTec/sentinel-owner-alert",
+  "icons": {
+    "16": "icon16.png",
+    "32": "icon32.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
   "permissions": [
     "storage",
-    "notifications",
-    "tabs",
-    "unlimitedStorage"
+    "notifications"
   ],
   "host_permissions": [
     "https://portal.azure.com/*"
@@ -17,7 +23,13 @@
   },
   "action": {
     "default_title": "Sentinel Owner Alert",
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon16.png",
+      "32": "icon32.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
   },
   "content_scripts": [
     {

@@ -1002,5 +1002,5 @@
 
   start();
   setStatus({ loaded: true, lastCheck: new Date().toLocaleString(), lastCheckTs: Date.now(), lastError: '' });
-  console.log(LOG_PREFIX, 'loaded v3.2.5');
+  console.log(LOG_PREFIX, 'loaded v3.3.0');
 })();

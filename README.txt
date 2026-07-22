@@ -1,4 +1,4 @@
-Sentinel Owner Alert v3.2.5
+Sentinel Owner Alert v3.3.0
 
 Update/install:
 1. Unzip this package.
@@ -10,7 +10,12 @@ Update/install:
    This creates a new extension instance, so settings and custom sound start from defaults.
 6. Refresh the Microsoft Sentinel Incidents page after reloading the extension.
 
-New in v3.2.5:
+New in v3.3.0:
+- Prepared for Chrome Web Store submission with minimum permissions, complete icon metadata and a reproducible release package.
+- Custom sound uploads are limited to 5 MB so the extension stays within the standard local storage quota.
+- Added a privacy policy and Chrome Web Store listing/review guidance.
+
+Existing v3.2.5 features:
 - Replaces the third-party MP3 with an original, reproducibly generated triple-bell WAV sound.
 - The bundled sound can be regenerated with tools/generate_alert.py.
 
@@ -62,3 +67,10 @@ Existing v3.0 features:
 Note:
 The extension can only inspect rows that Azure Portal has loaded into the page DOM. If Sentinel filtering or virtualization hides rows, they cannot be scanned until they are visible/loaded in the page.
 Custom sound survives restart as long as the extension is not removed and extension data is not cleared.
+
+Chrome Web Store release:
+1. Run: python3 tools/package_extension.py
+2. Upload the generated dist/sentinel-owner-alert-VERSION.zip to the Chrome Web Store Developer Dashboard.
+3. Copy the reviewed listing and privacy answers from STORE_LISTING.md.
+4. Publish PRIVACY.md at the public URL entered in the dashboard.
+5. Upload at least one sanitized 1280x800 or 640x400 screenshot that contains no real incident, tenant, user, subscription or workspace data.

@@ -394,8 +394,8 @@ $('customSound').addEventListener('change', async () => {
     return;
   }
 
-  if (file.size > 8 * 1024 * 1024) {
-    $('soundStatus').textContent = 'Soubor je moc velky. Zkus zvuk do 8 MB.';
+  if (file.size > 5 * 1024 * 1024) {
+    $('soundStatus').textContent = 'Soubor je moc velky. Zkus zvuk do 5 MB.';
     return;
   }
 
