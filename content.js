@@ -342,7 +342,10 @@
         position: relative !important;
         color: transparent !important;
       }
-      .${CUSTOM_CRITICAL_SEVERITY_CLASS} > * { opacity: 0 !important; }
+      .${CUSTOM_CRITICAL_SEVERITY_CLASS} * {
+        opacity: 0 !important;
+        color: transparent !important;
+      }
       .${CUSTOM_CRITICAL_SEVERITY_CLASS}::after {
         content: "Critical";
         position: absolute;
@@ -475,6 +478,17 @@
   function getRowCells(row) {
     return [...row.querySelectorAll('[role="gridcell"], [role="cell"], td, th')]
       .filter((cell) => normalize(cell.innerText || cell.textContent || ''));
+  }
+
+  function findSeverityCell(rowCells, headerMap, nativeSeverity) {
+    const mappedCell = Number.isInteger(headerMap.severity) ? rowCells[headerMap.severity] : null;
+    if (mappedCell && normalizeSeverity(mappedCell.innerText || mappedCell.textContent || '') === nativeSeverity) {
+      return mappedCell;
+    }
+
+    return rowCells.find((cell) =>
+      normalizeSeverity(cell.innerText || cell.textContent || '') === nativeSeverity
+    ) || mappedCell;
   }
 
   function getHeaderMap(root) {
@@ -631,11 +645,13 @@
         text.slice(0, 300);
 
       if (!id || seen.has(id)) continue;
-      const customCritical = customSeverity.isCustomCritical(severity, text);
-      const severityCell = Number.isInteger(headerMap.severity) ? rowCells[headerMap.severity] : null;
+      const nativeSeverity = severity;
+      const customCritical = customSeverity.isCustomCritical(nativeSeverity, text);
+      const severityCell = findSeverityCell(rowCells, headerMap, nativeSeverity);
       setCustomCriticalHighlight(row, severityCell, cfg.customCriticalHighlightEnabled !== false && customCritical);
+      severity = customCritical ? 'Critical' : nativeSeverity;
       seen.add(id);
-      rows.push({ id, title, owner, severity, customCritical, status, created, href, text });
+      rows.push({ id, title, owner, severity, nativeSeverity, customCritical, status, created, href, text });
     }
 
     return rows;
@@ -794,7 +810,7 @@
       lastAlert: `${new Date().toLocaleTimeString()} ${text}`,
       lastIncident: title,
       lastOwner: row.owner,
-      lastSeverity: row.customCritical ? 'Critical' : row.severity,
+      lastSeverity: row.severity,
       lastError: ''
     });
 
@@ -802,7 +818,7 @@
       type: 'SENTINEL_OWNER_ALERT',
       title,
       text,
-      severity: row.customCritical ? 'Critical' : row.severity,
+      severity: row.severity,
       owner: row.owner,
       reason,
       href: row.href || location.href
@@ -907,7 +923,7 @@
       const currentOwner = normalize(row.owner);
       const currentSeverity = row.severity || 'Unknown';
       lastOwner = currentOwner || lastOwner;
-      lastSeverity = (row.customCritical ? 'Critical' : currentSeverity) || lastSeverity;
+      lastSeverity = currentSeverity || lastSeverity;
 
       const previous = knownRows.get(row.id);
       const matchesTarget = ownerKey(currentOwner) === target;

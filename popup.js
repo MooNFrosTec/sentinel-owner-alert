@@ -266,7 +266,7 @@ function renderIncidentList(elementId, rows, emptyText) {
     const stateText = row.eligible ? t('eligible') : (row.state === 'blocked' ? t('blocked') : t('waiting'));
     const visibleText = row.visible === false ? t('notVisible') : t('visible');
     const showCustomCritical = lastConfigCache.customCriticalHighlightEnabled !== false && row.customCritical === true;
-    const displaySeverity = showCustomCritical ? 'Critical' : (row.severity || 'Unknown');
+    const displaySeverity = row.severity || 'Unknown';
     return `
       <div class="incidentItem${showCustomCritical ? ' customCritical' : ''}">
         <div class="incidentTitle">${escapeHtml(row.title || t('incident'))}</div>

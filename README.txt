@@ -12,8 +12,8 @@ Update/install:
 
 New in v3.5.0:
 - Detects native High incidents carrying the custom `Severity:Critical` tag.
-- Replaces the visible High label with a red `Critical` label and highlights the full row in Microsoft Sentinel.
-- Shows the same custom-critical visual in the popup without changing Sentinel's native High severity.
+- Classifies tagged High incidents as `Critical` inside the extension, including severity filtering and notifications.
+- Replaces the visible High label with a red `Critical` label and highlights the full row in Microsoft Sentinel; Sentinel's underlying stored severity remains High.
 
 Existing v3.4.0 features:
 - Added complete English and Czech localization using Chrome's built-in language system.
