@@ -154,7 +154,7 @@
   "error": { "message": "Chyba" },
   "customCriticalHighlight": { "message": "Zvýraznění Custom Critical" },
   "highlightHighCriticalTag": { "message": "Zvýraznit High incidenty s tagem Severity:Critical" },
-  "customCriticalBadge": { "message": "CUSTOM CRITICAL" },
-  "customCriticalHelp": { "message": "Přidá červené zvýraznění v tabulce Sentinel i v tomto přehledu. Nativní závažnost High se nezmění." },
+  "customCriticalBadge": { "message": "CRITICAL" },
+  "customCriticalHelp": { "message": "Zobrazí označené High incidenty jako Critical a červeně je zvýrazní. Podkladová závažnost v Sentinelu zůstává High." },
   "customCriticalRows": { "message": "Řádky Custom Critical" }
 }

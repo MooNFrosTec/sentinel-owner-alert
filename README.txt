@@ -12,7 +12,7 @@ Update/install:
 
 New in v3.5.0:
 - Detects native High incidents carrying the custom `Severity:Critical` tag.
-- Adds an optional red row highlight and `CUSTOM CRITICAL` badge in Microsoft Sentinel.
+- Replaces the visible High label with a red `Critical` label and highlights the full row in Microsoft Sentinel.
 - Shows the same custom-critical visual in the popup without changing Sentinel's native High severity.
 
 Existing v3.4.0 features:

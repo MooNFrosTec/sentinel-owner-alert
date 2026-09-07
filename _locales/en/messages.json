@@ -154,7 +154,7 @@
   "error": { "message": "Error" },
   "customCriticalHighlight": { "message": "Custom Critical highlight" },
   "highlightHighCriticalTag": { "message": "Highlight High incidents tagged Severity:Critical" },
-  "customCriticalBadge": { "message": "CUSTOM CRITICAL" },
-  "customCriticalHelp": { "message": "Adds a red visual highlight in the Sentinel table and this popup. It does not change the native High severity." },
+  "customCriticalBadge": { "message": "CRITICAL" },
+  "customCriticalHelp": { "message": "Shows tagged High incidents as Critical and adds a red highlight. The underlying Sentinel severity remains High." },
   "customCriticalRows": { "message": "Custom Critical rows" }
 }

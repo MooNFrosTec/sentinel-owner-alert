@@ -13,6 +13,7 @@
   const RECENT_LIMIT = 30;
   const RECENT_TTL_MS = 6 * 60 * 60 * 1000;
   const CUSTOM_CRITICAL_CLASS = 'sentinel-owner-alert-custom-critical';
+  const CUSTOM_CRITICAL_SEVERITY_CLASS = 'sentinel-owner-alert-custom-critical-severity';
   const CUSTOM_CRITICAL_STYLE_ID = 'sentinel-owner-alert-custom-critical-style';
 
   let knownRows = new Map();
@@ -337,13 +338,34 @@
         border-top-color: rgba(255, 64, 87, .7) !important;
         border-bottom-color: rgba(255, 64, 87, .7) !important;
       }
+      .${CUSTOM_CRITICAL_SEVERITY_CLASS} {
+        position: relative !important;
+        color: transparent !important;
+      }
+      .${CUSTOM_CRITICAL_SEVERITY_CLASS} > * { opacity: 0 !important; }
+      .${CUSTOM_CRITICAL_SEVERITY_CLASS}::after {
+        content: "Critical";
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        padding: 3px 9px;
+        border: 1px solid #ff6b7c;
+        border-radius: 999px;
+        background: #a1132a;
+        color: #fff;
+        font: 700 12px/1.2 Arial, sans-serif;
+        letter-spacing: .2px;
+        white-space: nowrap;
+        pointer-events: none;
+      }
       .${CUSTOM_CRITICAL_CLASS} > [role="gridcell"]:last-child,
       .${CUSTOM_CRITICAL_CLASS} > [role="cell"]:last-child,
       .${CUSTOM_CRITICAL_CLASS} > td:last-child { position: relative !important; padding-right: 132px !important; }
       .${CUSTOM_CRITICAL_CLASS} > [role="gridcell"]:last-child::after,
       .${CUSTOM_CRITICAL_CLASS} > [role="cell"]:last-child::after,
       .${CUSTOM_CRITICAL_CLASS} > td:last-child::after {
-        content: "CUSTOM CRITICAL";
+        content: "CRITICAL";
         position: absolute;
         right: 10px;
         top: 50%;
@@ -362,14 +384,21 @@
     document.documentElement.appendChild(style);
   }
 
-  function setCustomCriticalHighlight(row, enabled) {
+  function setCustomCriticalHighlight(row, severityCell, enabled) {
     if (row.classList.contains(CUSTOM_CRITICAL_CLASS) !== enabled) {
       row.classList.toggle(CUSTOM_CRITICAL_CLASS, enabled);
+    }
+    row.querySelectorAll(`.${CUSTOM_CRITICAL_SEVERITY_CLASS}`).forEach((cell) => {
+      if (!enabled || cell !== severityCell) cell.classList.remove(CUSTOM_CRITICAL_SEVERITY_CLASS);
+    });
+    if (enabled && severityCell && !severityCell.classList.contains(CUSTOM_CRITICAL_SEVERITY_CLASS)) {
+      severityCell.classList.add(CUSTOM_CRITICAL_SEVERITY_CLASS);
     }
   }
 
   function clearCustomCriticalHighlights() {
-    document.querySelectorAll(`.${CUSTOM_CRITICAL_CLASS}`).forEach((row) => setCustomCriticalHighlight(row, false));
+    document.querySelectorAll(`.${CUSTOM_CRITICAL_CLASS}`).forEach((row) => setCustomCriticalHighlight(row, null, false));
+    document.querySelectorAll(`.${CUSTOM_CRITICAL_SEVERITY_CLASS}`).forEach((cell) => cell.classList.remove(CUSTOM_CRITICAL_SEVERITY_CLASS));
   }
 
   function isStatusValue(value) {
@@ -440,9 +469,12 @@
   }
 
   function getCellTexts(row) {
+    return getRowCells(row).map((cell) => normalize(cell.innerText || cell.textContent || ''));
+  }
+
+  function getRowCells(row) {
     return [...row.querySelectorAll('[role="gridcell"], [role="cell"], td, th')]
-      .map((cell) => normalize(cell.innerText || cell.textContent || ''))
-      .filter(Boolean);
+      .filter((cell) => normalize(cell.innerText || cell.textContent || ''));
   }
 
   function getHeaderMap(root) {
@@ -471,7 +503,8 @@
     for (const row of headerRows) {
       const text = normalize(row.innerText || row.textContent || '');
       if (!/\b(Severity|Title|Owner|Status)\b/i.test(text)) continue;
-      const cells = getCellTexts(row);
+      const rowCells = getRowCells(row);
+      const cells = rowCells.map((cell) => normalize(cell.innerText || cell.textContent || ''));
       if (cells.length) applyHeaders(cells);
     }
 
@@ -541,7 +574,8 @@
       if (/Severity\s+Title\s+Owner/i.test(text)) continue;
       if (/^Severity\b/i.test(text) && /\bOwner\b/i.test(text) && /\bStatus\b/i.test(text)) continue;
 
-      const cells = getCellTexts(row);
+      const rowCells = getRowCells(row);
+      const cells = rowCells.map((cell) => normalize(cell.innerText || cell.textContent || ''));
       if (cells.length >= 2 && cells.some((cell) => /^severity$/i.test(cell)) && cells.some((cell) => /^owner$/i.test(cell))) continue;
 
       let owner = '';
@@ -598,7 +632,8 @@
 
       if (!id || seen.has(id)) continue;
       const customCritical = customSeverity.isCustomCritical(severity, text);
-      setCustomCriticalHighlight(row, cfg.customCriticalHighlightEnabled !== false && customCritical);
+      const severityCell = Number.isInteger(headerMap.severity) ? rowCells[headerMap.severity] : null;
+      setCustomCriticalHighlight(row, severityCell, cfg.customCriticalHighlightEnabled !== false && customCritical);
       seen.add(id);
       rows.push({ id, title, owner, severity, customCritical, status, created, href, text });
     }
@@ -759,7 +794,7 @@
       lastAlert: `${new Date().toLocaleTimeString()} ${text}`,
       lastIncident: title,
       lastOwner: row.owner,
-      lastSeverity: row.severity,
+      lastSeverity: row.customCritical ? 'Critical' : row.severity,
       lastError: ''
     });
 
@@ -767,7 +802,7 @@
       type: 'SENTINEL_OWNER_ALERT',
       title,
       text,
-      severity: row.severity,
+      severity: row.customCritical ? 'Critical' : row.severity,
       owner: row.owner,
       reason,
       href: row.href || location.href
@@ -872,7 +907,7 @@
       const currentOwner = normalize(row.owner);
       const currentSeverity = row.severity || 'Unknown';
       lastOwner = currentOwner || lastOwner;
-      lastSeverity = currentSeverity || lastSeverity;
+      lastSeverity = (row.customCritical ? 'Critical' : currentSeverity) || lastSeverity;
 
       const previous = knownRows.get(row.id);
       const matchesTarget = ownerKey(currentOwner) === target;
