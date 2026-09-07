@@ -28,6 +28,7 @@ Main features:
 
 - monitor incidents assigned to a configured owner;
 - filter notifications by severity and working hours;
+- visually highlight native High incidents carrying the custom `Severity:Critical` tag;
 - use the bundled alert sound or upload a custom sound stored locally;
 - show scanner health, visible incident counts, and recently observed incidents;
 - detect a disabled Microsoft Sentinel auto-refresh control and optionally display a warning;
@@ -55,6 +56,7 @@ Hlavní funkce:
 
 - sledování incidentů přiřazených nastavenému vlastníkovi;
 - filtrování oznámení podle závažnosti a pracovní doby;
+- vizuální zvýraznění High incidentů s vlastním tagem `Severity:Critical`;
 - vestavěný zvuk upozornění nebo vlastní zvuk uložený pouze místně;
 - zobrazení stavu skeneru, počtu viditelných incidentů a nedávno pozorovaných incidentů;
 - rozpoznání vypnutého automatického obnovování Microsoft Sentinel a volitelné varování;

@@ -11,6 +11,7 @@ const DEFAULTS = {
   customSoundSize: 0,
   customSoundStoredAt: '',
   desktopNotifications: true,
+  customCriticalHighlightEnabled: true,
   severityFilterEnabled: false,
   severityFilter: {
     Critical: true,
@@ -37,6 +38,7 @@ const DEFAULTS = {
     targetRows: 0,
     nonTargetRows: 0,
     eligibleRows: 0,
+    customCriticalRows: 0,
     visibleRows: [],
     rememberedRows: [],
     lastCheck: null,

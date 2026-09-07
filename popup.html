@@ -56,12 +56,23 @@
     .incidentList { max-height: 260px; overflow: auto; border: 1px solid #333; border-radius: 6px; background: #151515; }
     .incidentItem { padding: 8px; border-bottom: 1px solid #282828; }
     .incidentItem:last-child { border-bottom: 0; }
+    .incidentItem.customCritical {
+      margin: 5px;
+      border: 1px solid #ff4057;
+      border-left: 5px solid #ff4057;
+      border-radius: 6px;
+      background: linear-gradient(90deg, rgba(198, 40, 40, .30), rgba(198, 40, 40, .08));
+      box-shadow: 0 0 12px rgba(255, 64, 87, .18);
+    }
+    .incidentItem.customCritical:last-child { border-bottom: 1px solid #ff4057; }
     .incidentTitle { font-weight: bold; font-size: 12px; margin-bottom: 4px; }
     .incidentMeta { font-size: 11px; color: #bbb; line-height: 1.35; }
     .tag { display: inline-block; border-radius: 999px; padding: 1px 7px; margin-right: 4px; font-size: 11px; border: 1px solid #444; background: #222; }
     .tag.ok { border-color: #2e7d32; }
     .tag.wait { border-color: #f9a825; }
     .tag.block { border-color: #7b1f1f; }
+    .tag.customCritical { color: #fff; border-color: #ff4057; background: #a1132a; font-weight: bold; letter-spacing: .25px; }
+    .criticalPreview { margin-top: 8px; padding: 9px 10px; border: 1px solid #ff4057; border-left-width: 5px; border-radius: 6px; background: linear-gradient(90deg, rgba(198, 40, 40, .30), rgba(198, 40, 40, .08)); }
     .empty { padding: 10px; color: #888; font-size: 12px; }
     .autoRefreshRow { margin-top: 9px; padding: 8px; border-radius: 6px; background: #171717; border: 1px solid #333; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .refPill { display: inline-block; min-width: 44px; text-align: center; border-radius: 999px; padding: 3px 8px; font-weight: bold; border: 1px solid #555; background: #222; }
@@ -131,6 +142,10 @@
     <label class="inline"><input id="includeUnknownSeverity" type="checkbox"> Unknown</label>
   </div>
   <div class="small" data-i18n="severityHelp">When disabled, severity is ignored. Unknown handles rows whose severity cannot be read reliably.</div>
+
+  <h2 data-i18n="customCriticalHighlight">Custom Critical highlight</h2>
+  <label><input id="customCriticalHighlightEnabled" type="checkbox"> <span data-i18n="highlightHighCriticalTag">Highlight High incidents tagged Severity:Critical</span></label>
+  <div class="criticalPreview"><span class="tag customCritical" data-i18n="customCriticalBadge">CUSTOM CRITICAL</span> <span class="small" data-i18n="customCriticalHelp">Adds a red visual highlight in the Sentinel table and this popup. It does not change the native High severity.</span></div>
 
   <h2 data-i18n="workingHours">Working hours</h2>
   <label><input id="scheduleEnabled" type="checkbox"> <span data-i18n="useSchedule">Use a schedule</span></label>

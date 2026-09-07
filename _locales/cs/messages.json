@@ -151,5 +151,10 @@
   "lastIncident": { "message": "Poslední incident" },
   "lastSeverity": { "message": "Poslední závažnost" },
   "lastAlert": { "message": "Poslední upozornění" },
-  "error": { "message": "Chyba" }
+  "error": { "message": "Chyba" },
+  "customCriticalHighlight": { "message": "Zvýraznění Custom Critical" },
+  "highlightHighCriticalTag": { "message": "Zvýraznit High incidenty s tagem Severity:Critical" },
+  "customCriticalBadge": { "message": "CUSTOM CRITICAL" },
+  "customCriticalHelp": { "message": "Přidá červené zvýraznění v tabulce Sentinel i v tomto přehledu. Nativní závažnost High se nezmění." },
+  "customCriticalRows": { "message": "Řádky Custom Critical" }
 }

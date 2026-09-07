@@ -19,6 +19,7 @@ const DEFAULTS = {
   customSoundDataUrl: '',
   customSoundName: '',
   desktopNotifications: true,
+  customCriticalHighlightEnabled: true,
   severityFilterEnabled: false,
   severityFilter: {
     Critical: true,
@@ -264,14 +265,16 @@ function renderIncidentList(elementId, rows, emptyText) {
     const tagClass = rowStateClass(row);
     const stateText = row.eligible ? t('eligible') : (row.state === 'blocked' ? t('blocked') : t('waiting'));
     const visibleText = row.visible === false ? t('notVisible') : t('visible');
+    const showCustomCritical = lastConfigCache.customCriticalHighlightEnabled !== false && row.customCritical === true;
     return `
-      <div class="incidentItem">
+      <div class="incidentItem${showCustomCritical ? ' customCritical' : ''}">
         <div class="incidentTitle">${escapeHtml(row.title || t('incident'))}</div>
         <div class="incidentMeta">
           <span class="tag ${tagClass}">${escapeHtml(stateText)}</span>
           <span class="tag">${escapeHtml(visibleText)}</span>
           <span class="tag">${escapeHtml(t('ownerLabel', [row.owner || '-']))}</span>
           <span class="tag">${escapeHtml(t('severityLabel', [row.severity || 'Unknown']))}</span>
+          ${showCustomCritical ? `<span class="tag customCritical">${escapeHtml(t('customCriticalBadge'))}</span>` : ''}
           ${row.status ? `<span class="tag">${escapeHtml(t('statusLabel', [row.status]))}</span>` : ''}
           <br>
           ${escapeHtml(localizeOperationalText(row.reason || ''))}
@@ -301,6 +304,7 @@ function renderStatus(status) {
     <b>${t('targetRows')}:</b> ${escapeHtml(s.targetRows || s.matchingRows || 0)}<br>
     <b>${t('nonTargetRows')}:</b> ${escapeHtml(s.nonTargetRows || 0)}<br>
     <b>${t('eligibleRows')}:</b> ${escapeHtml(s.eligibleRows || 0)}<br>
+    <b>${t('customCriticalRows')}:</b> ${escapeHtml(s.customCriticalRows || 0)}<br>
     <b>${t('unassignedRows')}:</b> ${escapeHtml(s.unassignedRows || 0)}<br>
     <b>${t('rememberedNotVisible')}:</b> ${escapeHtml(s.notVisibleRememberedRows || 0)}<br>
     <b>${t('lastCheck')}:</b> ${escapeHtml(s.lastCheck || '-')}<br>
@@ -333,6 +337,7 @@ function collectConfigFromUi() {
     autoRefreshSoundEnabled: $('autoRefreshSoundEnabled').checked,
     autoRefreshSoundSeconds: Number($('autoRefreshSoundSeconds').value),
     autoRefreshAutoEnable: $('autoRefreshAutoEnable').checked,
+    customCriticalHighlightEnabled: $('customCriticalHighlightEnabled').checked,
     severityFilterEnabled: $('severityFilterEnabled').checked,
     severityFilter: {
       Critical: $('sevCritical').checked,
@@ -380,6 +385,7 @@ async function load() {
   $('autoRefreshSoundEnabled').checked = cfg.autoRefreshSoundEnabled === true;
   $('autoRefreshSoundSeconds').value = cfg.autoRefreshSoundSeconds || DEFAULTS.autoRefreshSoundSeconds;
   $('autoRefreshAutoEnable').checked = cfg.autoRefreshAutoEnable === true;
+  $('customCriticalHighlightEnabled').checked = cfg.customCriticalHighlightEnabled !== false;
 
   $('severityFilterEnabled').checked = cfg.severityFilterEnabled;
   $('sevCritical').checked = cfg.severityFilter.Critical !== false;
@@ -425,7 +431,7 @@ async function playTestSound() {
   }
 }
 
-['enabled', 'desktopNotifications', 'notifyOnExisting', 'repeatWhilePresent', 'targetOwner', 'intervalSeconds', 'repeatSoundSeconds', 'volume', 'autoRefreshBannerEnabled', 'autoRefreshSoundEnabled', 'autoRefreshSoundSeconds', 'autoRefreshAutoEnable', 'severityFilterEnabled', 'sevCritical', 'sevHigh', 'sevMedium', 'sevLow', 'sevInformational', 'includeUnknownSeverity', 'scheduleEnabled', 'scheduleStart', 'scheduleEnd', 'day0', 'day1', 'day2', 'day3', 'day4', 'day5', 'day6'].forEach((id) => {
+['enabled', 'desktopNotifications', 'notifyOnExisting', 'repeatWhilePresent', 'targetOwner', 'intervalSeconds', 'repeatSoundSeconds', 'volume', 'autoRefreshBannerEnabled', 'autoRefreshSoundEnabled', 'autoRefreshSoundSeconds', 'autoRefreshAutoEnable', 'customCriticalHighlightEnabled', 'severityFilterEnabled', 'sevCritical', 'sevHigh', 'sevMedium', 'sevLow', 'sevInformational', 'includeUnknownSeverity', 'scheduleEnabled', 'scheduleStart', 'scheduleEnd', 'day0', 'day1', 'day2', 'day3', 'day4', 'day5', 'day6'].forEach((id) => {
   $(id).addEventListener('input', save);
   $(id).addEventListener('change', save);
 });

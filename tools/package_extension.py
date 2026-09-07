@@ -14,6 +14,7 @@ PACKAGE_FILES = (
     'popup.html',
     'popup.js',
     'i18n.js',
+    'custom-severity.js',
     'alert.wav',
     'icon16.png',
     'icon32.png',

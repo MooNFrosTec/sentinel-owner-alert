@@ -151,5 +151,10 @@
   "lastIncident": { "message": "Last incident" },
   "lastSeverity": { "message": "Last severity" },
   "lastAlert": { "message": "Last alert" },
-  "error": { "message": "Error" }
+  "error": { "message": "Error" },
+  "customCriticalHighlight": { "message": "Custom Critical highlight" },
+  "highlightHighCriticalTag": { "message": "Highlight High incidents tagged Severity:Critical" },
+  "customCriticalBadge": { "message": "CUSTOM CRITICAL" },
+  "customCriticalHelp": { "message": "Adds a red visual highlight in the Sentinel table and this popup. It does not change the native High severity." },
+  "customCriticalRows": { "message": "Custom Critical rows" }
 }

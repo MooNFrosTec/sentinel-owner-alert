@@ -1,5 +1,6 @@
 (() => {
   const LOG_PREFIX = '[Sentinel Owner Alert]';
+  const customSeverity = globalThis.SentinelOwnerAlertSeverity;
   const t = (key, substitutions, fallback = '') => {
     try {
       return chrome.i18n.getMessage(key, substitutions) || fallback || key;
@@ -11,6 +12,8 @@
   const STATUS_VALUES = ['New', 'Active', 'Closed'];
   const RECENT_LIMIT = 30;
   const RECENT_TTL_MS = 6 * 60 * 60 * 1000;
+  const CUSTOM_CRITICAL_CLASS = 'sentinel-owner-alert-custom-critical';
+  const CUSTOM_CRITICAL_STYLE_ID = 'sentinel-owner-alert-custom-critical-style';
 
   let knownRows = new Map();
   let timer = null;
@@ -34,6 +37,7 @@
     repeatSoundSeconds: 10,
     customSoundDataUrl: '',
     desktopNotifications: true,
+    customCriticalHighlightEnabled: true,
     severityFilterEnabled: false,
     severityFilter: {
       Critical: true,
@@ -311,8 +315,61 @@
       if (exact) return exact;
     }
 
-    const match = normalize(rowText).match(/\b(Critical|High|Medium|Low|Informational)\b/i);
+    const withoutCustomTag = normalize(customSeverity.stripCustomCriticalTag(rowText));
+    const match = withoutCustomTag.match(/\b(Critical|High|Medium|Low|Informational)\b/i);
     return match ? normalizeSeverity(match[1]) : 'Unknown';
+  }
+
+  function ensureCustomCriticalStyles() {
+    if (document.getElementById(CUSTOM_CRITICAL_STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = CUSTOM_CRITICAL_STYLE_ID;
+    style.textContent = `
+      .${CUSTOM_CRITICAL_CLASS} {
+        outline: 2px solid #ff4057 !important;
+        outline-offset: -2px !important;
+        box-shadow: inset 6px 0 0 #ff4057, 0 0 14px rgba(255, 64, 87, .38) !important;
+      }
+      .${CUSTOM_CRITICAL_CLASS} > [role="gridcell"],
+      .${CUSTOM_CRITICAL_CLASS} > [role="cell"],
+      .${CUSTOM_CRITICAL_CLASS} > td {
+        background-color: rgba(198, 40, 40, .18) !important;
+        border-top-color: rgba(255, 64, 87, .7) !important;
+        border-bottom-color: rgba(255, 64, 87, .7) !important;
+      }
+      .${CUSTOM_CRITICAL_CLASS} > [role="gridcell"]:last-child,
+      .${CUSTOM_CRITICAL_CLASS} > [role="cell"]:last-child,
+      .${CUSTOM_CRITICAL_CLASS} > td:last-child { position: relative !important; padding-right: 132px !important; }
+      .${CUSTOM_CRITICAL_CLASS} > [role="gridcell"]:last-child::after,
+      .${CUSTOM_CRITICAL_CLASS} > [role="cell"]:last-child::after,
+      .${CUSTOM_CRITICAL_CLASS} > td:last-child::after {
+        content: "CUSTOM CRITICAL";
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        padding: 3px 8px;
+        border: 1px solid #ff6b7c;
+        border-radius: 999px;
+        background: #a1132a;
+        color: #fff;
+        font: 700 10px/1.2 Arial, sans-serif;
+        letter-spacing: .3px;
+        white-space: nowrap;
+        pointer-events: none;
+      }
+    `;
+    document.documentElement.appendChild(style);
+  }
+
+  function setCustomCriticalHighlight(row, enabled) {
+    if (row.classList.contains(CUSTOM_CRITICAL_CLASS) !== enabled) {
+      row.classList.toggle(CUSTOM_CRITICAL_CLASS, enabled);
+    }
+  }
+
+  function clearCustomCriticalHighlights() {
+    document.querySelectorAll(`.${CUSTOM_CRITICAL_CLASS}`).forEach((row) => setCustomCriticalHighlight(row, false));
   }
 
   function isStatusValue(value) {
@@ -463,6 +520,8 @@
   }
 
   function extractRows(cfg) {
+    ensureCustomCriticalStyles();
+    if (cfg.customCriticalHighlightEnabled === false) clearCustomCriticalHighlights();
     const rows = [];
     const seen = new Set();
     const rowHeaderMaps = new Map();
@@ -538,8 +597,10 @@
         text.slice(0, 300);
 
       if (!id || seen.has(id)) continue;
+      const customCritical = customSeverity.isCustomCritical(severity, text);
+      setCustomCriticalHighlight(row, cfg.customCriticalHighlightEnabled !== false && customCritical);
       seen.add(id);
-      rows.push({ id, title, owner, severity, status, created, href, text });
+      rows.push({ id, title, owner, severity, customCritical, status, created, href, text });
     }
 
     return rows;
@@ -657,6 +718,7 @@
       title: truncate(row.title || 'Incident', 90),
       owner: truncate(row.owner || '-', 50),
       severity: row.severity || 'Unknown',
+      customCritical: row.customCritical === true,
       status: row.status || '',
       created: truncate(row.created || '', 40),
       visible: visible !== false,
@@ -756,6 +818,7 @@
     checks += 1;
 
     if (!cfg.enabled || !isSentinel) {
+      clearCustomCriticalHighlights();
       const status = {
         loaded: true,
         enabled: cfg.enabled !== false,
@@ -768,6 +831,7 @@
         targetRows: 0,
         nonTargetRows: 0,
         eligibleRows: 0,
+        customCriticalRows: 0,
         unassignedRows: 0,
         notVisibleRememberedRows: [...knownRows.values()].filter((row) => !row.visible).length,
         lastCheck: new Date().toLocaleString(),
@@ -794,6 +858,7 @@
     let targetRows = 0;
     let nonTargetRows = 0;
     let eligibleRows = 0;
+    let customCriticalRows = 0;
     let unassignedRows = 0;
     let blockedBySeverityRows = 0;
 
@@ -818,6 +883,7 @@
       if (isUnassigned(currentOwner)) unassignedRows += 1;
       if (matchesTarget && !allowedBySeverity) blockedBySeverityRows += 1;
       if (matchesTarget && allowedBySeverity && schedule.allowed) eligibleRows += 1;
+      if (row.customCritical) customCriticalRows += 1;
 
       if (schedule.allowed && matchesTarget && allowedBySeverity) {
         const repeatWhilePresent = cfg.repeatWhilePresent === true;
@@ -849,6 +915,7 @@
         title: row.title,
         owner: currentOwner,
         severity: currentSeverity,
+        customCritical: row.customCritical === true,
         status: row.status,
         created: row.created,
         href: row.href,
@@ -868,7 +935,7 @@
 
     const statusRows = buildStatusRows(cfg, schedule);
     const notVisibleRememberedRows = [...knownRows.values()].filter((row) => !row.visible).length;
-    const signature = `${autoRefresh.found}:${autoRefresh.enabled}|` + rows.map((r) => `${r.id}:${r.owner}:${r.severity}`).join('|');
+    const signature = `${autoRefresh.found}:${autoRefresh.enabled}|` + rows.map((r) => `${r.id}:${r.owner}:${r.severity}:${r.customCritical}`).join('|');
 
     if (signature !== lastSignature || checks % 3 === 0 || reason === 'force' || reason === 'initial') {
       lastSignature = signature;
@@ -882,6 +949,7 @@
         targetRows,
         nonTargetRows,
         eligibleRows,
+        customCriticalRows,
         unassignedRows,
         blockedBySeverityRows,
         notVisibleRememberedRows,
@@ -901,7 +969,7 @@
         lastError: '',
         visibleRows: statusRows.visible,
         rememberedRows: statusRows.remembered,
-        debug: `reason=${reason}; rows=${rows.length}; target=${targetRows}; eligible=${eligibleRows}; visible=${statusRows.visible.length}; remembered=${statusRows.remembered.length}`
+        debug: `reason=${reason}; rows=${rows.length}; target=${targetRows}; eligible=${eligibleRows}; customCritical=${customCriticalRows}; visible=${statusRows.visible.length}; remembered=${statusRows.remembered.length}`
       });
     }
   }
@@ -995,7 +1063,8 @@
     const watched = [
       'enabled', 'intervalSeconds', 'targetOwner', 'severityFilterEnabled', 'severityFilter',
       'severityLevels', 'includeUnknownSeverity', 'scheduleEnabled', 'scheduleStart', 'scheduleEnd', 'scheduleDays',
-      'autoRefreshBannerEnabled', 'autoRefreshSoundEnabled', 'autoRefreshSoundSeconds', 'autoRefreshAutoEnable'
+      'autoRefreshBannerEnabled', 'autoRefreshSoundEnabled', 'autoRefreshSoundSeconds', 'autoRefreshAutoEnable',
+      'customCriticalHighlightEnabled'
     ];
     if (watched.some((key) => Object.prototype.hasOwnProperty.call(changes, key))) {
       start();
@@ -1009,5 +1078,5 @@
 
   start();
   setStatus({ loaded: true, lastCheck: new Date().toLocaleString(), lastCheckTs: Date.now(), lastError: '' });
-  console.log(LOG_PREFIX, 'loaded v3.3.0');
+  console.log(LOG_PREFIX, 'loaded v3.5.0');
 })();

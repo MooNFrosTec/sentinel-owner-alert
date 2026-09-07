@@ -1,4 +1,4 @@
-Sentinel Owner Alert v3.4.0
+Sentinel Owner Alert v3.5.0
 
 Update/install:
 1. Unzip this package.
@@ -10,7 +10,12 @@ Update/install:
    This creates a new extension instance, so settings and custom sound start from defaults.
 6. Refresh the Microsoft Sentinel Incidents page after reloading the extension.
 
-New in v3.4.0:
+New in v3.5.0:
+- Detects native High incidents carrying the custom `Severity:Critical` tag.
+- Adds an optional red row highlight and `CUSTOM CRITICAL` badge in Microsoft Sentinel.
+- Shows the same custom-critical visual in the popup without changing Sentinel's native High severity.
+
+Existing v3.4.0 features:
 - Added complete English and Czech localization using Chrome's built-in language system.
 - English is the default; Czech is selected automatically when the browser UI uses Czech.
 - Localized the popup, Azure Portal auto-refresh warning, extension metadata and desktop notifications.
