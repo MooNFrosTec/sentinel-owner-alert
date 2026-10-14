@@ -1,4 +1,4 @@
-Sentinel Owner Alert v3.5.0
+Sentinel Owner Alert v3.6.0
 
 Update/install:
 1. Unzip this package.
@@ -10,7 +10,13 @@ Update/install:
    This creates a new extension instance, so settings and custom sound start from defaults.
 6. Refresh the Microsoft Sentinel Incidents page after reloading the extension.
 
-New in v3.5.0:
+New in v3.6.0:
+- Adds SOC Focus mode for keeping the SOC queue and the current analyst's assigned incidents visible in one Sentinel tab.
+- Highlights the configured queue owner in amber and the analyst owner in blue.
+- Can show Queue + Mine, Queue only, Mine only, or all incidents, while hiding or dimming unrelated owners locally.
+- Alerts continue to target only the configured queue owner; Focus mode does not change Sentinel data or call Sentinel APIs.
+
+Existing v3.5.0 features:
 - Detects native High incidents carrying the custom `Severity:Critical` tag.
 - Classifies tagged High incidents as `Critical` inside the extension, including severity filtering and notifications.
 - Replaces the visible High label with a red `Critical` label and highlights the full row in Microsoft Sentinel; Sentinel's underlying stored severity remains High.

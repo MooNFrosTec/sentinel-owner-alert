@@ -156,5 +156,18 @@
   "highlightHighCriticalTag": { "message": "Highlight High incidents tagged Severity:Critical" },
   "customCriticalBadge": { "message": "CRITICAL" },
   "customCriticalHelp": { "message": "Shows tagged High incidents as Critical and adds a red highlight. The underlying Sentinel severity remains High." },
-  "customCriticalRows": { "message": "Custom Critical rows" }
+  "customCriticalRows": { "message": "Custom Critical rows" },
+  "focusMode": { "message": "SOC Focus – Queue + Mine" },
+  "focusModeEnabled": { "message": "Enable SOC Focus mode" },
+  "focusMyOwner": { "message": "My Sentinel owner" },
+  "focusView": { "message": "Visible focus groups" },
+  "focusQueueMine": { "message": "SOC queue + mine" },
+  "focusQueueOnly": { "message": "SOC queue only" },
+  "focusMineOnly": { "message": "Mine only" },
+  "focusAll": { "message": "All incidents" },
+  "focusHideOthers": { "message": "Hide rows outside the selected groups" },
+  "focusQueue": { "message": "SOC queue" },
+  "focusMine": { "message": "Mine" },
+  "focusOthers": { "message": "Others" },
+  "focusHelp": { "message": "Keep Sentinel Owner set to All. Queue incidents stay prominent and assigned incidents remain visible as Mine." }
 }

@@ -13,6 +13,10 @@ const DEFAULTS = {
   volume: 0.8,
   intervalSeconds: 2,
   targetOwner: 'SOC_Tier_1',
+  focusModeEnabled: false,
+  focusMyOwner: '',
+  focusView: 'queueMine',
+  focusHideOthers: true,
   notifyOnExisting: false,
   repeatWhilePresent: false,
   repeatSoundSeconds: 10,
@@ -151,6 +155,13 @@ function setScheduleOptionsEnabled(enabled) {
   $('scheduleDays').style.opacity = enabled ? '1' : '0.55';
 }
 
+function setFocusOptionsEnabled(enabled) {
+  ['focusMyOwner', 'focusView', 'focusHideOthers'].forEach((id) => {
+    $(id).disabled = !enabled;
+  });
+  $('focusOptions').style.opacity = enabled ? '1' : '0.55';
+}
+
 
 function renderAutoRefreshStatus(status) {
   const s = status || {};
@@ -245,6 +256,10 @@ function renderScanIndicator(status) {
   $('cntVisible').textContent = s.rows || 0;
   $('cntTarget').textContent = s.targetRows || s.matchingRows || 0;
   $('cntEligible').textContent = s.eligibleRows || 0;
+  $('focusSummary').style.display = lastConfigCache.focusModeEnabled === true ? 'grid' : 'none';
+  $('cntFocusQueue').textContent = s.focusQueueRows || 0;
+  $('cntFocusMine').textContent = s.focusMineRows || 0;
+  $('cntFocusOther').textContent = s.focusOtherRows || 0;
 }
 
 function rowStateClass(row) {
@@ -267,11 +282,19 @@ function renderIncidentList(elementId, rows, emptyText) {
     const visibleText = row.visible === false ? t('notVisible') : t('visible');
     const showCustomCritical = lastConfigCache.customCriticalHighlightEnabled !== false && row.customCritical === true;
     const displaySeverity = row.severity || 'Unknown';
+    const focusClass = lastConfigCache.focusModeEnabled === true && row.focusCategory === 'queue'
+      ? ' focusQueue'
+      : (lastConfigCache.focusModeEnabled === true && row.focusCategory === 'mine' ? ' focusMine' : '');
+    const focusTag = lastConfigCache.focusModeEnabled === true && row.focusCategory === 'queue'
+      ? `<span class="tag focusQueue">${escapeHtml(t('focusQueue'))}</span>`
+      : (lastConfigCache.focusModeEnabled === true && row.focusCategory === 'mine'
+          ? `<span class="tag focusMine">${escapeHtml(t('focusMine'))}</span>` : '');
     return `
-      <div class="incidentItem${showCustomCritical ? ' customCritical' : ''}">
+      <div class="incidentItem${showCustomCritical ? ' customCritical' : ''}${focusClass}">
         <div class="incidentTitle">${escapeHtml(row.title || t('incident'))}</div>
         <div class="incidentMeta">
           <span class="tag ${tagClass}">${escapeHtml(stateText)}</span>
+          ${focusTag}
           <span class="tag">${escapeHtml(visibleText)}</span>
           <span class="tag">${escapeHtml(t('ownerLabel', [row.owner || '-']))}</span>
           <span class="tag${showCustomCritical ? ' customCritical' : ''}">${escapeHtml(t('severityLabel', [displaySeverity]))}</span>
@@ -305,6 +328,9 @@ function renderStatus(status) {
     <b>${t('nonTargetRows')}:</b> ${escapeHtml(s.nonTargetRows || 0)}<br>
     <b>${t('eligibleRows')}:</b> ${escapeHtml(s.eligibleRows || 0)}<br>
     <b>${t('customCriticalRows')}:</b> ${escapeHtml(s.customCriticalRows || 0)}<br>
+    <b>${t('focusQueue')}:</b> ${escapeHtml(s.focusQueueRows || 0)}<br>
+    <b>${t('focusMine')}:</b> ${escapeHtml(s.focusMineRows || 0)}<br>
+    <b>${t('focusOthers')}:</b> ${escapeHtml(s.focusOtherRows || 0)}<br>
     <b>${t('unassignedRows')}:</b> ${escapeHtml(s.unassignedRows || 0)}<br>
     <b>${t('rememberedNotVisible')}:</b> ${escapeHtml(s.notVisibleRememberedRows || 0)}<br>
     <b>${t('lastCheck')}:</b> ${escapeHtml(s.lastCheck || '-')}<br>
@@ -331,6 +357,10 @@ function collectConfigFromUi() {
     repeatWhilePresent: $('repeatWhilePresent').checked,
     repeatSoundSeconds: Number($('repeatSoundSeconds').value),
     targetOwner: $('targetOwner').value.trim() || 'SOC_Tier_1',
+    focusModeEnabled: $('focusModeEnabled').checked,
+    focusMyOwner: $('focusMyOwner').value.trim(),
+    focusView: $('focusView').value,
+    focusHideOthers: $('focusHideOthers').checked,
     intervalSeconds: Number($('intervalSeconds').value),
     volume: Number($('volume').value) / 100,
     autoRefreshBannerEnabled: $('autoRefreshBannerEnabled').checked,
@@ -361,6 +391,7 @@ async function save() {
   updateLabels();
   setSeverityOptionsEnabled(cfg.severityFilterEnabled);
   setScheduleOptionsEnabled(cfg.scheduleEnabled);
+  setFocusOptionsEnabled(cfg.focusModeEnabled);
   await sendToActive({ type: 'RESTART_MONITOR' });
 }
 
@@ -378,6 +409,10 @@ async function load() {
   $('notifyOnExisting').checked = cfg.notifyOnExisting;
   $('repeatWhilePresent').checked = cfg.repeatWhilePresent;
   $('targetOwner').value = cfg.targetOwner;
+  $('focusModeEnabled').checked = cfg.focusModeEnabled === true;
+  $('focusMyOwner').value = cfg.focusMyOwner || '';
+  $('focusView').value = ['queueMine', 'queueOnly', 'mineOnly', 'all'].includes(cfg.focusView) ? cfg.focusView : 'queueMine';
+  $('focusHideOthers').checked = cfg.focusHideOthers !== false;
   $('intervalSeconds').value = cfg.intervalSeconds;
   $('repeatSoundSeconds').value = cfg.repeatSoundSeconds;
   $('volume').value = Math.round((Number(cfg.volume) || 0) * 100);
@@ -409,6 +444,7 @@ async function load() {
   updateLabels();
   setSeverityOptionsEnabled(cfg.severityFilterEnabled);
   setScheduleOptionsEnabled(cfg.scheduleEnabled);
+  setFocusOptionsEnabled(cfg.focusModeEnabled);
   renderStatus(cfg.lastStatus || {});
 
   // Ask the content script for the freshest status if popup opens on the Sentinel tab.
@@ -431,7 +467,7 @@ async function playTestSound() {
   }
 }
 
-['enabled', 'desktopNotifications', 'notifyOnExisting', 'repeatWhilePresent', 'targetOwner', 'intervalSeconds', 'repeatSoundSeconds', 'volume', 'autoRefreshBannerEnabled', 'autoRefreshSoundEnabled', 'autoRefreshSoundSeconds', 'autoRefreshAutoEnable', 'customCriticalHighlightEnabled', 'severityFilterEnabled', 'sevCritical', 'sevHigh', 'sevMedium', 'sevLow', 'sevInformational', 'includeUnknownSeverity', 'scheduleEnabled', 'scheduleStart', 'scheduleEnd', 'day0', 'day1', 'day2', 'day3', 'day4', 'day5', 'day6'].forEach((id) => {
+['enabled', 'desktopNotifications', 'notifyOnExisting', 'repeatWhilePresent', 'targetOwner', 'focusModeEnabled', 'focusMyOwner', 'focusView', 'focusHideOthers', 'intervalSeconds', 'repeatSoundSeconds', 'volume', 'autoRefreshBannerEnabled', 'autoRefreshSoundEnabled', 'autoRefreshSoundSeconds', 'autoRefreshAutoEnable', 'customCriticalHighlightEnabled', 'severityFilterEnabled', 'sevCritical', 'sevHigh', 'sevMedium', 'sevLow', 'sevInformational', 'includeUnknownSeverity', 'scheduleEnabled', 'scheduleStart', 'scheduleEnd', 'day0', 'day1', 'day2', 'day3', 'day4', 'day5', 'day6'].forEach((id) => {
   $(id).addEventListener('input', save);
   $(id).addEventListener('change', save);
 });

@@ -15,6 +15,10 @@
   const CUSTOM_CRITICAL_CLASS = 'sentinel-owner-alert-custom-critical';
   const CUSTOM_CRITICAL_SEVERITY_CLASS = 'sentinel-owner-alert-custom-critical-severity';
   const CUSTOM_CRITICAL_STYLE_ID = 'sentinel-owner-alert-custom-critical-style';
+  const FOCUS_QUEUE_CLASS = 'sentinel-owner-alert-focus-queue';
+  const FOCUS_MINE_CLASS = 'sentinel-owner-alert-focus-mine';
+  const FOCUS_OTHER_CLASS = 'sentinel-owner-alert-focus-other';
+  const FOCUS_HIDDEN_CLASS = 'sentinel-owner-alert-focus-hidden';
 
   let knownRows = new Map();
   let timer = null;
@@ -33,6 +37,10 @@
     volume: 0.8,
     intervalSeconds: 2,
     targetOwner: 'SOC_Tier_1',
+    focusModeEnabled: false,
+    focusMyOwner: '',
+    focusView: 'queueMine',
+    focusHideOthers: true,
     notifyOnExisting: false,
     repeatWhilePresent: false,
     repeatSoundSeconds: 10,
@@ -331,6 +339,29 @@
         outline-offset: -2px !important;
         box-shadow: inset 6px 0 0 #ff4057, 0 0 14px rgba(255, 64, 87, .38) !important;
       }
+      .${FOCUS_QUEUE_CLASS} {
+        outline: 2px solid #f59e0b !important;
+        outline-offset: -2px !important;
+        box-shadow: inset 6px 0 0 #f59e0b, 0 0 12px rgba(245, 158, 11, .28) !important;
+      }
+      .${FOCUS_QUEUE_CLASS} > [role="gridcell"],
+      .${FOCUS_QUEUE_CLASS} > [role="cell"],
+      .${FOCUS_QUEUE_CLASS} > td { background-color: rgba(146, 92, 10, .17) !important; }
+      .${FOCUS_MINE_CLASS} {
+        outline: 2px solid #3b82f6 !important;
+        outline-offset: -2px !important;
+        box-shadow: inset 6px 0 0 #3b82f6 !important;
+      }
+      .${FOCUS_MINE_CLASS} > [role="gridcell"],
+      .${FOCUS_MINE_CLASS} > [role="cell"],
+      .${FOCUS_MINE_CLASS} > td { background-color: rgba(30, 90, 170, .16) !important; }
+      .${FOCUS_OTHER_CLASS} { opacity: .18 !important; filter: grayscale(.75) !important; }
+      .${FOCUS_HIDDEN_CLASS} { display: none !important; }
+      .${CUSTOM_CRITICAL_CLASS}.${FOCUS_QUEUE_CLASS},
+      .${CUSTOM_CRITICAL_CLASS}.${FOCUS_MINE_CLASS} {
+        outline-color: #ff4057 !important;
+        box-shadow: inset 6px 0 0 #ff4057, 0 0 14px rgba(255, 64, 87, .38) !important;
+      }
       .${CUSTOM_CRITICAL_CLASS} > [role="gridcell"],
       .${CUSTOM_CRITICAL_CLASS} > [role="cell"],
       .${CUSTOM_CRITICAL_CLASS} > td {
@@ -402,6 +433,49 @@
   function clearCustomCriticalHighlights() {
     document.querySelectorAll(`.${CUSTOM_CRITICAL_CLASS}`).forEach((row) => setCustomCriticalHighlight(row, null, false));
     document.querySelectorAll(`.${CUSTOM_CRITICAL_SEVERITY_CLASS}`).forEach((cell) => cell.classList.remove(CUSTOM_CRITICAL_SEVERITY_CLASS));
+  }
+
+  function getFocusCategory(owner, cfg) {
+    if (isTargetOwner(owner, cfg.targetOwner)) return 'queue';
+    if (cfg.focusMyOwner && isTargetOwner(owner, cfg.focusMyOwner)) return 'mine';
+    return 'other';
+  }
+
+  function focusCategorySelected(category, view) {
+    if (view === 'all') return true;
+    if (view === 'queueOnly') return category === 'queue';
+    if (view === 'mineOnly') return category === 'mine';
+    return category === 'queue' || category === 'mine';
+  }
+
+  function setFocusRowVisual(row, owner, cfg) {
+    const classes = [FOCUS_QUEUE_CLASS, FOCUS_MINE_CLASS, FOCUS_OTHER_CLASS, FOCUS_HIDDEN_CLASS];
+    if (cfg.focusModeEnabled !== true) {
+      classes.forEach((className) => row.classList.toggle(className, false));
+      row.removeAttribute('data-sentinel-owner-alert-focus');
+      return 'other';
+    }
+
+    const category = getFocusCategory(owner, cfg);
+    const selected = focusCategorySelected(category, cfg.focusView);
+    const desiredClass = selected
+      ? (category === 'queue' ? FOCUS_QUEUE_CLASS : (category === 'mine' ? FOCUS_MINE_CLASS : ''))
+      : (cfg.focusHideOthers === false ? FOCUS_OTHER_CLASS : FOCUS_HIDDEN_CLASS);
+    classes.forEach((className) => row.classList.toggle(className, className === desiredClass));
+    if (row.getAttribute('data-sentinel-owner-alert-focus') !== category) {
+      row.setAttribute('data-sentinel-owner-alert-focus', category);
+    }
+    return category;
+  }
+
+  function clearFocusVisuals() {
+    const selector = [FOCUS_QUEUE_CLASS, FOCUS_MINE_CLASS, FOCUS_OTHER_CLASS, FOCUS_HIDDEN_CLASS]
+      .map((className) => `.${className}`).join(',');
+    document.querySelectorAll(selector).forEach((row) => {
+      [FOCUS_QUEUE_CLASS, FOCUS_MINE_CLASS, FOCUS_OTHER_CLASS, FOCUS_HIDDEN_CLASS]
+        .forEach((className) => row.classList.remove(className));
+      row.removeAttribute('data-sentinel-owner-alert-focus');
+    });
   }
 
   function isStatusValue(value) {
@@ -569,6 +643,7 @@
   function extractRows(cfg) {
     ensureCustomCriticalStyles();
     if (cfg.customCriticalHighlightEnabled === false) clearCustomCriticalHighlights();
+    if (cfg.focusModeEnabled !== true) clearFocusVisuals();
     const rows = [];
     const seen = new Set();
     const rowHeaderMaps = new Map();
@@ -649,9 +724,10 @@
       const customCritical = customSeverity.isCustomCritical(nativeSeverity, text);
       const severityCell = findSeverityCell(rowCells, headerMap, nativeSeverity);
       setCustomCriticalHighlight(row, severityCell, cfg.customCriticalHighlightEnabled !== false && customCritical);
+      const focusCategory = setFocusRowVisual(row, owner, cfg);
       severity = customCritical ? 'Critical' : nativeSeverity;
       seen.add(id);
-      rows.push({ id, title, owner, severity, nativeSeverity, customCritical, status, created, href, text });
+      rows.push({ id, title, owner, severity, nativeSeverity, customCritical, focusCategory, status, created, href, text });
     }
 
     return rows;
@@ -770,6 +846,7 @@
       owner: truncate(row.owner || '-', 50),
       severity: row.severity || 'Unknown',
       customCritical: row.customCritical === true,
+      focusCategory: row.focusCategory || getFocusCategory(row.owner, cfg),
       status: row.status || '',
       created: truncate(row.created || '', 40),
       visible: visible !== false,
@@ -870,6 +947,7 @@
 
     if (!cfg.enabled || !isSentinel) {
       clearCustomCriticalHighlights();
+      clearFocusVisuals();
       const status = {
         loaded: true,
         enabled: cfg.enabled !== false,
@@ -883,6 +961,9 @@
         nonTargetRows: 0,
         eligibleRows: 0,
         customCriticalRows: 0,
+        focusQueueRows: 0,
+        focusMineRows: 0,
+        focusOtherRows: 0,
         unassignedRows: 0,
         notVisibleRememberedRows: [...knownRows.values()].filter((row) => !row.visible).length,
         lastCheck: new Date().toLocaleString(),
@@ -910,6 +991,9 @@
     let nonTargetRows = 0;
     let eligibleRows = 0;
     let customCriticalRows = 0;
+    let focusQueueRows = 0;
+    let focusMineRows = 0;
+    let focusOtherRows = 0;
     let unassignedRows = 0;
     let blockedBySeverityRows = 0;
 
@@ -935,6 +1019,9 @@
       if (matchesTarget && !allowedBySeverity) blockedBySeverityRows += 1;
       if (matchesTarget && allowedBySeverity && schedule.allowed) eligibleRows += 1;
       if (row.customCritical) customCriticalRows += 1;
+      if (row.focusCategory === 'queue') focusQueueRows += 1;
+      else if (row.focusCategory === 'mine') focusMineRows += 1;
+      else focusOtherRows += 1;
 
       if (schedule.allowed && matchesTarget && allowedBySeverity) {
         const repeatWhilePresent = cfg.repeatWhilePresent === true;
@@ -967,6 +1054,7 @@
         owner: currentOwner,
         severity: currentSeverity,
         customCritical: row.customCritical === true,
+        focusCategory: row.focusCategory || 'other',
         status: row.status,
         created: row.created,
         href: row.href,
@@ -1001,6 +1089,9 @@
         nonTargetRows,
         eligibleRows,
         customCriticalRows,
+        focusQueueRows,
+        focusMineRows,
+        focusOtherRows,
         unassignedRows,
         blockedBySeverityRows,
         notVisibleRememberedRows,
@@ -1020,7 +1111,7 @@
         lastError: '',
         visibleRows: statusRows.visible,
         rememberedRows: statusRows.remembered,
-        debug: `reason=${reason}; rows=${rows.length}; target=${targetRows}; eligible=${eligibleRows}; customCritical=${customCriticalRows}; visible=${statusRows.visible.length}; remembered=${statusRows.remembered.length}`
+        debug: `reason=${reason}; rows=${rows.length}; target=${targetRows}; eligible=${eligibleRows}; queue=${focusQueueRows}; mine=${focusMineRows}; other=${focusOtherRows}; customCritical=${customCriticalRows}; visible=${statusRows.visible.length}; remembered=${statusRows.remembered.length}`
       });
     }
   }
@@ -1115,7 +1206,7 @@
       'enabled', 'intervalSeconds', 'targetOwner', 'severityFilterEnabled', 'severityFilter',
       'severityLevels', 'includeUnknownSeverity', 'scheduleEnabled', 'scheduleStart', 'scheduleEnd', 'scheduleDays',
       'autoRefreshBannerEnabled', 'autoRefreshSoundEnabled', 'autoRefreshSoundSeconds', 'autoRefreshAutoEnable',
-      'customCriticalHighlightEnabled'
+      'customCriticalHighlightEnabled', 'focusModeEnabled', 'focusMyOwner', 'focusView', 'focusHideOthers'
     ];
     if (watched.some((key) => Object.prototype.hasOwnProperty.call(changes, key))) {
       start();
@@ -1129,5 +1220,5 @@
 
   start();
   setStatus({ loaded: true, lastCheck: new Date().toLocaleString(), lastCheckTs: Date.now(), lastError: '' });
-  console.log(LOG_PREFIX, 'loaded v3.5.0');
+  console.log(LOG_PREFIX, 'loaded v3.6.0');
 })();

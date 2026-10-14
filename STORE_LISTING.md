@@ -27,6 +27,7 @@ Sentinel Owner Alert monitors incident rows currently visible on the Microsoft S
 Main features:
 
 - monitor incidents assigned to a configured owner;
+- keep the SOC queue and the current analyst's assigned incidents visible together with an optional local Focus view;
 - filter notifications by severity and working hours;
 - visually highlight native High incidents carrying the custom `Severity:Critical` tag;
 - use the bundled alert sound or upload a custom sound stored locally;
@@ -55,6 +56,7 @@ Sentinel Owner Alert sleduje řádky incidentů právě zobrazené na stránce I
 Hlavní funkce:
 
 - sledování incidentů přiřazených nastavenému vlastníkovi;
+- společné zobrazení SOC fronty a incidentů přiřazených aktuálnímu analytikovi pomocí volitelného lokálního Focus režimu;
 - filtrování oznámení podle závažnosti a pracovní doby;
 - vizuální zvýraznění High incidentů s vlastním tagem `Severity:Critical`;
 - vestavěný zvuk upozornění nebo vlastní zvuk uložený pouze místně;

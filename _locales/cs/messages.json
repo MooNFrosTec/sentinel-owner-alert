@@ -156,5 +156,18 @@
   "highlightHighCriticalTag": { "message": "Zvýraznit High incidenty s tagem Severity:Critical" },
   "customCriticalBadge": { "message": "CRITICAL" },
   "customCriticalHelp": { "message": "Zobrazí označené High incidenty jako Critical a červeně je zvýrazní. Podkladová závažnost v Sentinelu zůstává High." },
-  "customCriticalRows": { "message": "Řádky Custom Critical" }
+  "customCriticalRows": { "message": "Řádky Custom Critical" },
+  "focusMode": { "message": "SOC Focus – Fronta + moje" },
+  "focusModeEnabled": { "message": "Zapnout režim SOC Focus" },
+  "focusMyOwner": { "message": "Můj vlastník v Sentinelu" },
+  "focusView": { "message": "Zobrazené skupiny" },
+  "focusQueueMine": { "message": "SOC fronta + moje" },
+  "focusQueueOnly": { "message": "Pouze SOC fronta" },
+  "focusMineOnly": { "message": "Pouze moje" },
+  "focusAll": { "message": "Všechny incidenty" },
+  "focusHideOthers": { "message": "Skrýt řádky mimo vybrané skupiny" },
+  "focusQueue": { "message": "SOC fronta" },
+  "focusMine": { "message": "Moje" },
+  "focusOthers": { "message": "Ostatní" },
+  "focusHelp": { "message": "V Sentinelu ponechte vlastníka nastaveného na Vše. Incidenty ve frontě zůstanou výrazné a po přiřazení zůstanou viditelné jako Moje." }
 }

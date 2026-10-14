@@ -53,9 +53,14 @@
     .counterGrid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 8px; }
     .counter { background: #171717; border: 1px solid #2c2c2c; border-radius: 5px; padding: 6px; text-align: center; }
     .counter b { display: block; font-size: 16px; }
+    .focusSummary { display: none; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 8px; }
+    .focusSummary .queue { border-color: #f59e0b; }
+    .focusSummary .mine { border-color: #3b82f6; }
     .incidentList { max-height: 260px; overflow: auto; border: 1px solid #333; border-radius: 6px; background: #151515; }
     .incidentItem { padding: 8px; border-bottom: 1px solid #282828; }
     .incidentItem:last-child { border-bottom: 0; }
+    .incidentItem.focusQueue { border-left: 5px solid #f59e0b; background: rgba(146, 92, 10, .15); }
+    .incidentItem.focusMine { border-left: 5px solid #3b82f6; background: rgba(30, 90, 170, .14); }
     .incidentItem.customCritical {
       margin: 5px;
       border: 1px solid #ff4057;
@@ -73,6 +78,9 @@
     .tag.block { border-color: #7b1f1f; }
     .tag.customCritical { color: #fff; border-color: #ff4057; background: #a1132a; font-weight: bold; letter-spacing: .25px; }
     .criticalPreview { margin-top: 8px; padding: 9px 10px; border: 1px solid #ff4057; border-left-width: 5px; border-radius: 6px; background: linear-gradient(90deg, rgba(198, 40, 40, .30), rgba(198, 40, 40, .08)); }
+    .focusPreview { margin-top: 8px; padding: 9px 10px; border: 1px solid #444; border-radius: 6px; background: #171717; }
+    .tag.focusQueue { color: #fff2c4; border-color: #f59e0b; background: #593b08; font-weight: bold; }
+    .tag.focusMine { color: #dbeafe; border-color: #3b82f6; background: #123968; font-weight: bold; }
     .empty { padding: 10px; color: #888; font-size: 12px; }
     .autoRefreshRow { margin-top: 9px; padding: 8px; border-radius: 6px; background: #171717; border: 1px solid #333; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .refPill { display: inline-block; min-width: 44px; text-align: center; border-radius: 999px; padding: 3px 8px; font-weight: bold; border: 1px solid #555; background: #222; }
@@ -96,6 +104,11 @@
       <div class="counter"><b id="cntVisible">0</b><span class="small" data-i18n="visible">visible</span></div>
       <div class="counter"><b id="cntTarget">0</b><span class="small" data-i18n="target">target</span></div>
       <div class="counter"><b id="cntEligible">0</b><span class="small" data-i18n="eligible">eligible</span></div>
+    </div>
+    <div id="focusSummary" class="focusSummary">
+      <div class="counter queue"><b id="cntFocusQueue">0</b><span class="small" data-i18n="focusQueue">SOC queue</span></div>
+      <div class="counter mine"><b id="cntFocusMine">0</b><span class="small" data-i18n="focusMine">Mine</span></div>
+      <div class="counter"><b id="cntFocusOther">0</b><span class="small" data-i18n="focusOthers">Others</span></div>
     </div>
     <div class="autoRefreshRow">
       <div>
@@ -124,6 +137,22 @@
 
   <label data-i18n="targetOwnerSetting">Target owner</label>
   <input id="targetOwner" type="text" placeholder="SOC_Tier_1">
+
+  <h2 data-i18n="focusMode">SOC Focus – Queue + Mine</h2>
+  <label><input id="focusModeEnabled" type="checkbox"> <span data-i18n="focusModeEnabled">Enable SOC Focus mode</span></label>
+  <div id="focusOptions">
+    <label data-i18n="focusMyOwner">My Sentinel owner</label>
+    <input id="focusMyOwner" type="text" placeholder="SOC Ivo Szűcs">
+    <label data-i18n="focusView">Visible focus groups</label>
+    <select id="focusView" style="width:100%;box-sizing:border-box;padding:6px;background:#222;color:#eee;border:1px solid #444;border-radius:4px;">
+      <option value="queueMine" data-i18n="focusQueueMine">SOC queue + mine</option>
+      <option value="queueOnly" data-i18n="focusQueueOnly">SOC queue only</option>
+      <option value="mineOnly" data-i18n="focusMineOnly">Mine only</option>
+      <option value="all" data-i18n="focusAll">All incidents</option>
+    </select>
+    <label><input id="focusHideOthers" type="checkbox"> <span data-i18n="focusHideOthers">Hide rows outside the selected groups</span></label>
+  </div>
+  <div class="focusPreview"><span class="tag focusQueue" data-i18n="focusQueue">SOC queue</span> <span class="tag focusMine" data-i18n="focusMine">Mine</span><br><span class="small" data-i18n="focusHelp">Keep Sentinel Owner set to All. Queue incidents stay prominent and assigned incidents remain visible as Mine.</span></div>
 
   <label><span data-i18n="scanInterval">Scan interval</span>: <span id="intervalLabel"></span> s</label>
   <input id="intervalSeconds" type="range" min="1" max="30" step="1">
