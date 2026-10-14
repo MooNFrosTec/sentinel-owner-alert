@@ -1,4 +1,4 @@
-Sentinel Owner Alert v3.6.2
+Sentinel Owner Alert v3.6.3
 
 Update/install:
 1. Unzip this package.
@@ -10,11 +10,15 @@ Update/install:
    This creates a new extension instance, so settings and custom sound start from defaults.
 6. Refresh the Microsoft Sentinel Incidents page after reloading the extension.
 
-New in v3.6.2:
+New in v3.6.3:
+- Applies SOC Focus styling to every rendered Sentinel row before incident deduplication, so repeated titles such as multiple `Suspicious script launched` incidents are all hidden or dimmed correctly.
+- Uses the rendered row index as an additional fallback identity when Sentinel does not expose an incident link or row key.
+
+Existing v3.6.2 fix:
 - Fixes Focus classification when the dynamic Sentinel table reports an unreliable Owner column index by verifying configured owners against the full incident row as a fallback.
 
 Existing v3.6.1 fix:
-- Fixes SOC Focus owner matching when Azure and the configured owner use different Unicode representations of diacritics (for example `Szűcs`).
+- Fixes SOC Focus owner matching when Azure and the configured owner use different Unicode representations of diacritics (for example `José`).
 
 Existing v3.6.0 features:
 - Adds SOC Focus mode for keeping the SOC queue and the current analyst's assigned incidents visible in one Sentinel tab.

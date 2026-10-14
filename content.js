@@ -716,16 +716,15 @@
         row.getAttribute('data-automation-key') || '';
       const id = href ||
         rowKey ||
-        makeStableId([title, created]) ||
-        makeStableId([title, ariaIndex]) ||
+        makeStableId([title, created, owner, ariaIndex]) ||
         text.slice(0, 300);
 
-      if (!id || seen.has(id)) continue;
       const nativeSeverity = severity;
       const customCritical = customSeverity.isCustomCritical(nativeSeverity, text);
       const severityCell = findSeverityCell(rowCells, headerMap, nativeSeverity);
       setCustomCriticalHighlight(row, severityCell, cfg.customCriticalHighlightEnabled !== false && customCritical);
       const focusCategory = setFocusRowVisual(row, owner, text, cfg);
+      if (!id || seen.has(id)) continue;
       severity = customCritical ? 'Critical' : nativeSeverity;
       seen.add(id);
       rows.push({ id, title, owner, severity, nativeSeverity, customCritical, focusCategory, status, created, href, text });
@@ -1221,5 +1220,5 @@
 
   start();
   setStatus({ loaded: true, lastCheck: new Date().toLocaleString(), lastCheckTs: Date.now(), lastError: '' });
-  console.log(LOG_PREFIX, 'loaded v3.6.2');
+  console.log(LOG_PREFIX, 'loaded v3.6.3');
 })();
