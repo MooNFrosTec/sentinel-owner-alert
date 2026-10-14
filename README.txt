@@ -1,4 +1,4 @@
-Sentinel Owner Alert v3.6.0
+Sentinel Owner Alert v3.6.1
 
 Update/install:
 1. Unzip this package.
@@ -10,7 +10,10 @@ Update/install:
    This creates a new extension instance, so settings and custom sound start from defaults.
 6. Refresh the Microsoft Sentinel Incidents page after reloading the extension.
 
-New in v3.6.0:
+New in v3.6.1:
+- Fixes SOC Focus owner matching when Azure and the configured owner use different Unicode representations of diacritics (for example `Szűcs`).
+
+Existing v3.6.0 features:
 - Adds SOC Focus mode for keeping the SOC queue and the current analyst's assigned incidents visible in one Sentinel tab.
 - Highlights the configured queue owner in amber and the analyst owner in blue.
 - Can show Queue + Mine, Queue only, Mine only, or all incidents, while hiding or dimming unrelated owners locally.

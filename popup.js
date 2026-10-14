@@ -46,6 +46,8 @@ const DEFAULTS = {
 
 let lastStatusCache = {};
 let lastConfigCache = { ...DEFAULTS };
+let saveTimer = null;
+let saveQueue = Promise.resolve();
 
 function mergeConfig(input) {
   const raw = input || {};
@@ -395,6 +397,16 @@ async function save() {
   await sendToActive({ type: 'RESTART_MONITOR' });
 }
 
+function queueSave(delay = 0) {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    saveQueue = saveQueue
+      .catch(() => {})
+      .then(() => save())
+      .catch((error) => console.warn('Unable to save settings:', error));
+  }, delay);
+}
+
 async function load() {
   const stored = await chrome.storage.local.get({
     ...DEFAULTS,
@@ -468,8 +480,8 @@ async function playTestSound() {
 }
 
 ['enabled', 'desktopNotifications', 'notifyOnExisting', 'repeatWhilePresent', 'targetOwner', 'focusModeEnabled', 'focusMyOwner', 'focusView', 'focusHideOthers', 'intervalSeconds', 'repeatSoundSeconds', 'volume', 'autoRefreshBannerEnabled', 'autoRefreshSoundEnabled', 'autoRefreshSoundSeconds', 'autoRefreshAutoEnable', 'customCriticalHighlightEnabled', 'severityFilterEnabled', 'sevCritical', 'sevHigh', 'sevMedium', 'sevLow', 'sevInformational', 'includeUnknownSeverity', 'scheduleEnabled', 'scheduleStart', 'scheduleEnd', 'day0', 'day1', 'day2', 'day3', 'day4', 'day5', 'day6'].forEach((id) => {
-  $(id).addEventListener('input', save);
-  $(id).addEventListener('change', save);
+  $(id).addEventListener('input', () => queueSave(180));
+  $(id).addEventListener('change', () => queueSave(0));
 });
 
 $('customSound').addEventListener('change', async () => {

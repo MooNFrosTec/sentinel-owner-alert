@@ -1,6 +1,7 @@
 (() => {
   const LOG_PREFIX = '[Sentinel Owner Alert]';
   const customSeverity = globalThis.SentinelOwnerAlertSeverity;
+  const ownerUtils = globalThis.SentinelOwnerAlertOwner;
   const t = (key, substitutions, fallback = '') => {
     try {
       return chrome.i18n.getMessage(key, substitutions) || fallback || key;
@@ -67,9 +68,9 @@
   };
 
   const normalize = (value) => String(value || '').replace(/\s+/g, ' ').trim();
-  const ownerKey = (value) => normalize(value).toLowerCase().replace(/[\s_-]+/g, '');
+  const ownerKey = (value) => ownerUtils.key(value);
   const isUnassigned = (value) => ownerKey(value) === 'unassigned';
-  const isTargetOwner = (value, targetOwner) => ownerKey(value) === ownerKey(targetOwner);
+  const isTargetOwner = (value, targetOwner) => ownerUtils.matches(value, targetOwner);
 
   function mergeConfig(raw) {
     const cfg = { ...DEFAULTS, ...(raw || {}) };
@@ -1220,5 +1221,5 @@
 
   start();
   setStatus({ loaded: true, lastCheck: new Date().toLocaleString(), lastCheckTs: Date.now(), lastError: '' });
-  console.log(LOG_PREFIX, 'loaded v3.6.0');
+  console.log(LOG_PREFIX, 'loaded v3.6.1');
 })();
