@@ -436,9 +436,9 @@
     document.querySelectorAll(`.${CUSTOM_CRITICAL_SEVERITY_CLASS}`).forEach((cell) => cell.classList.remove(CUSTOM_CRITICAL_SEVERITY_CLASS));
   }
 
-  function getFocusCategory(owner, cfg) {
-    if (isTargetOwner(owner, cfg.targetOwner)) return 'queue';
-    if (cfg.focusMyOwner && isTargetOwner(owner, cfg.focusMyOwner)) return 'mine';
+  function getFocusCategory(owner, cfg, rowText = '') {
+    if (isTargetOwner(owner, cfg.targetOwner) || ownerUtils.contains(rowText, cfg.targetOwner)) return 'queue';
+    if (cfg.focusMyOwner && (isTargetOwner(owner, cfg.focusMyOwner) || ownerUtils.contains(rowText, cfg.focusMyOwner))) return 'mine';
     return 'other';
   }
 
@@ -449,7 +449,7 @@
     return category === 'queue' || category === 'mine';
   }
 
-  function setFocusRowVisual(row, owner, cfg) {
+  function setFocusRowVisual(row, owner, rowText, cfg) {
     const classes = [FOCUS_QUEUE_CLASS, FOCUS_MINE_CLASS, FOCUS_OTHER_CLASS, FOCUS_HIDDEN_CLASS];
     if (cfg.focusModeEnabled !== true) {
       classes.forEach((className) => row.classList.toggle(className, false));
@@ -457,7 +457,7 @@
       return 'other';
     }
 
-    const category = getFocusCategory(owner, cfg);
+    const category = getFocusCategory(owner, cfg, rowText);
     const selected = focusCategorySelected(category, cfg.focusView);
     const desiredClass = selected
       ? (category === 'queue' ? FOCUS_QUEUE_CLASS : (category === 'mine' ? FOCUS_MINE_CLASS : ''))
@@ -725,7 +725,7 @@
       const customCritical = customSeverity.isCustomCritical(nativeSeverity, text);
       const severityCell = findSeverityCell(rowCells, headerMap, nativeSeverity);
       setCustomCriticalHighlight(row, severityCell, cfg.customCriticalHighlightEnabled !== false && customCritical);
-      const focusCategory = setFocusRowVisual(row, owner, cfg);
+      const focusCategory = setFocusRowVisual(row, owner, text, cfg);
       severity = customCritical ? 'Critical' : nativeSeverity;
       seen.add(id);
       rows.push({ id, title, owner, severity, nativeSeverity, customCritical, focusCategory, status, created, href, text });
@@ -1221,5 +1221,5 @@
 
   start();
   setStatus({ loaded: true, lastCheck: new Date().toLocaleString(), lastCheckTs: Date.now(), lastError: '' });
-  console.log(LOG_PREFIX, 'loaded v3.6.1');
+  console.log(LOG_PREFIX, 'loaded v3.6.2');
 })();

@@ -9,5 +9,8 @@ assert.equal(owner.matches('SOC_Ivo_Szűcs', 'SOC Ivo Szűcs'), true);
 assert.equal(owner.matches('SOC-Tier-1', 'SOC_Tier_1'), true);
 assert.equal(owner.matches('SOC Ivo Szűcs', 'SOC_Tier_1'), false);
 assert.equal(owner.matches('Moneta', ''), false);
+assert.equal(owner.contains('Low sfr-security CandyOpen SOC Ivo Szu\u030Bcs Active', 'SOC Ivo Szűcs'), true);
+assert.equal(owner.contains('Medium siem-sentinel Incident Moneta New', 'SOC Ivo Szűcs'), false);
+assert.equal(owner.contains('anything', ''), false);
 
 console.log('Owner normalization tests passed.');

@@ -14,5 +14,10 @@
     return configuredKey !== '' && key(value) === configuredKey;
   }
 
-  globalThis.SentinelOwnerAlertOwner = { key, matches };
+  function contains(value, configuredOwner) {
+    const configuredKey = key(configuredOwner);
+    return configuredKey.length >= 4 && key(value).includes(configuredKey);
+  }
+
+  globalThis.SentinelOwnerAlertOwner = { key, matches, contains };
 })();
