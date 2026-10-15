@@ -815,8 +815,14 @@
     return text.length > max ? `${text.slice(0, max - 1)}...` : text;
   }
 
+  function rowMatchesTarget(row, cfg) {
+    return row.focusCategory === 'queue' ||
+      isTargetOwner(row.owner, cfg.targetOwner) ||
+      ownerUtils.contains(row.text || '', cfg.targetOwner);
+  }
+
   function classifyRow(row, cfg, schedule) {
-    const targetMatched = isTargetOwner(row.owner, cfg.targetOwner);
+    const targetMatched = rowMatchesTarget(row, cfg);
     const sevAllowed = severityAllowed(row.severity || 'Unknown', cfg);
     const eligible = targetMatched && sevAllowed && schedule.allowed;
     let state = 'waiting';
@@ -984,7 +990,6 @@
 
     const rows = extractRows(cfg);
     const currentIds = new Set(rows.map((row) => row.id));
-    const target = ownerKey(cfg.targetOwner);
     let lastOwner = '';
     let lastSeverity = '';
     let targetRows = 0;
@@ -1004,13 +1009,14 @@
     }
 
     for (const row of rows) {
-      const currentOwner = normalize(row.owner);
+      const matchesTarget = rowMatchesTarget(row, cfg);
+      const currentOwner = matchesTarget ? normalize(cfg.targetOwner) : normalize(row.owner);
+      row.owner = currentOwner;
       const currentSeverity = row.severity || 'Unknown';
       lastOwner = currentOwner || lastOwner;
       lastSeverity = currentSeverity || lastSeverity;
 
       const previous = knownRows.get(row.id);
-      const matchesTarget = ownerKey(currentOwner) === target;
       const allowedBySeverity = severityAllowed(currentSeverity, cfg);
 
       if (matchesTarget) targetRows += 1;
@@ -1026,7 +1032,7 @@
       if (schedule.allowed && matchesTarget && allowedBySeverity) {
         const repeatWhilePresent = cfg.repeatWhilePresent === true;
         const changedFromUnassigned = previous !== undefined && isUnassigned(previous.owner);
-        const changedToTarget = previous !== undefined && !isTargetOwner(previous.owner, cfg.targetOwner) && matchesTarget;
+        const changedToTarget = previous !== undefined && previous.targetMatched !== true && matchesTarget;
         const existingAllowed = previous === undefined && cfg.notifyOnExisting === true && reason !== 'initial';
         const becameAllowedBySeverity = previous !== undefined && previous.targetMatched === true && previous.severityAllowed === false;
         const repeatSeconds = Math.max(1, Number(cfg.repeatSoundSeconds || DEFAULTS.repeatSoundSeconds));
@@ -1220,5 +1226,5 @@
 
   start();
   setStatus({ loaded: true, lastCheck: new Date().toLocaleString(), lastCheckTs: Date.now(), lastError: '' });
-  console.log(LOG_PREFIX, 'loaded v3.6.3');
+  console.log(LOG_PREFIX, 'loaded v3.6.4');
 })();

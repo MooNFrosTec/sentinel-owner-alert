@@ -1,4 +1,4 @@
-Sentinel Owner Alert v3.6.3
+Sentinel Owner Alert v3.6.4
 
 Update/install:
 1. Unzip this package.
@@ -10,7 +10,11 @@ Update/install:
    This creates a new extension instance, so settings and custom sound start from defaults.
 6. Refresh the Microsoft Sentinel Incidents page after reloading the extension.
 
-New in v3.6.3:
+New in v3.6.4:
+- Uses the same resilient queue-owner detection for sound and desktop notifications as SOC Focus highlighting.
+- Restores alerts when Sentinel's dynamic table exposes an unreliable Owner column index.
+
+Existing v3.6.3 fixes:
 - Applies SOC Focus styling to every rendered Sentinel row before incident deduplication, so repeated titles such as multiple `Suspicious script launched` incidents are all hidden or dimmed correctly.
 - Uses the rendered row index as an additional fallback identity when Sentinel does not expose an incident link or row key.
 
